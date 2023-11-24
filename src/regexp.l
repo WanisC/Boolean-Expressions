@@ -17,7 +17,7 @@ lettre [a-z]+
 union [+]*
 concat \.
 etoile [*]+
-epsilon E
+epsilon ^$
 vide 0
 parenthese_ouverte (
 parenthese_fermee )
