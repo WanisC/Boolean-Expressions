@@ -20,7 +20,7 @@ main.c: regexp
 # Commenter deux des trois lignes en fonction de l'ordi
 # La deuxième et la troisième est normalement pour les MAC
 # La première pour les autres systèmes
-# il faut éventuelleme,nt remplacer -ll par -lfl
+# il faut éventuellement remplacer -ll par -lfl
 regexp: regexp.yy.c regexp.tab.c
 	gcc -o $@ $^ -ly -ll
 #	gcc -o $@ $^ ${LDFLAGS} -ly -lfl
