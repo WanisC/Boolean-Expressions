@@ -185,6 +185,30 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 //###
 
 AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
+	struct transition *t = A.T;
+	while (t != NULL) { // On cherche les transitions (q1,epsilon,q2)
+		if (t->a != epsilon) t = t->suiv;
+		else {
+			struct transition *t2 = t->suiv; // On prend l'état q2 atteignable par une transition epsilon
+			while (t2 != NULL) { // On cherche les transitions (q2,a,q3), avec a != epsilon
+				if (t2->a == epsilon) t2 = t2->suiv;
+				else {
+					A = ajoute_une_transition(A,t->p,t2->a,t2->q); // On ajoute la transition (q1,a,q3)
+					if (A.F[t->q]) A = etat_final_ON(A,t->p); // Si q2 est final alors q1 est final
+				}	
+			}
+		}
+	}
+	struct transition *t2 = A.T;
+	while (t2 != NULL) { // On cherche les transitions (q1,epsilon,q2)
+		if (t2->a == epsilon) {
+			struct transition *t3 = t2->suiv;
+			A.T = t3;
+			free(t2);
+			t2 = t3;
+		}
+		else t2 = t2->suiv;
+	}
 	return A;
 }
 
@@ -212,20 +236,19 @@ AUTOMATE minimise (AUTOMATE A) {
 // Renvoie vrai si le mot mot est reconnu par l'automate A
 int reconnait (AUTOMATE A, char *mot) {
 	int retour = 0;
+	unsigned int start = 0; // Pointeur pour sauvegarder l'état courant
+	struct transition *t = A.T;
+	while (mot[0] != 0) { // Tant qu'il reste des lettres dans le mot
+		while (t && (t->p != start) && (t->a != mot[0])) t = t->suiv; // Recherche de la transition (p,mot[0],q)
+		if (t) { // Si la transition existe
+			t = t->suiv;
+			start = t->q; // On passe à l'état suivant
+			mot++;
+		}
+		else break; // Pas de transition
+	}
+	retour = A.F[start]; // Si l'état dans lequel est final alors le mot est reconnu, sinon non
 	if (retour) printf("%s EST RECONNU PAR %s\n",mot, A.nom);
-		else    printf("%s N'est PAS reconnu par %s\n",mot, A.nom);
+	else    printf("%s N'est PAS reconnu par %s\n",mot, A.nom);
 	return retour;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
