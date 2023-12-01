@@ -185,20 +185,27 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 //###
 
 AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
+	// Phase 1 : Ajout des bonnes transitions
 	struct transition *t = A.T;
-	while (t != NULL) { // On cherche les transitions (q1,epsilon,q2)
-		if (t->a != epsilon) t = t->suiv;
+	while (t) { // On cherche les transitions (q1,epsilon,q2)
+		if (t->a != 0) t = t->suiv;
 		else {
-			struct transition *t2 = t->suiv; // On prend l'état q2 atteignable par une transition epsilon
-			while (t2 != NULL) { // On cherche les transitions (q2,a,q3), avec a != epsilon
-				if (t2->a == epsilon) t2 = t2->suiv;
-				else {
+			struct transition *t2 = A.T; // On va regarder les transitions qui succèdent (q1,epsilon,q2)
+			while (t2) { // On cherche les transitions (q2,a,q3), avec a != epsilon
+				//! vérifier que l'état d'arrivée et le nouvel état de départ sont égaux (2,E,0 et (4,E,5) est possible alors que non car 0!=4)
+				if (t2->a != 0 && t->q == t2->p) { //! problème d'un cycle d'epsilon rend les itérations infinies
 					A = ajoute_une_transition(A,t->p,t2->a,t2->q); // On ajoute la transition (q1,a,q3)
-					if (A.F[t->q]) A = etat_final_ON(A,t->p); // Si q2 est final alors q1 est final
-				}	
+					if (A.F[t2->p]) A = etat_final_ON(A,t->p); // Si q2(t2->p) est final alors q1(t->p) est final
+					t2 = t2->suiv;
+				} else t2 = t2->suiv;
+
+				break;
 			}
+			t = t->suiv;
 		}
 	}
+
+	// Phase 2 : Suppression des transitions epsilon
 	struct transition *t2 = A.T;
 	while (t2 != NULL) { // On cherche les transitions (q1,epsilon,q2)
 		if (t2->a == epsilon) {
@@ -236,18 +243,18 @@ AUTOMATE minimise (AUTOMATE A) {
 // Renvoie vrai si le mot mot est reconnu par l'automate A
 int reconnait (AUTOMATE A, char *mot) {
 	int retour = 0;
-	unsigned int start = 0; // Pointeur pour sauvegarder l'état courant
+	unsigned int curr_etat = 0; // Pointeur pour sauvegarder l'état courant
 	struct transition *t = A.T;
 	while (mot[0] != 0) { // Tant qu'il reste des lettres dans le mot
-		while (t && (t->p != start) && (t->a != mot[0])) t = t->suiv; // Recherche de la transition (p,mot[0],q)
+		while (t && (t->p != curr_etat) && (t->a != mot[0])) t = t->suiv; // Recherche de la transition (p,mot[0],q)
 		if (t) { // Si la transition existe
 			t = t->suiv;
-			start = t->q; // On passe à l'état suivant
+			curr_etat = t->q; // On passe à l'état suivant
 			mot++;
 		}
 		else break; // Pas de transition
 	}
-	retour = A.F[start]; // Si l'état dans lequel est final alors le mot est reconnu, sinon non
+	retour = A.F[curr_etat]; // Si l'état dans lequel est final alors le mot est reconnu, sinon non
 	if (retour) printf("%s EST RECONNU PAR %s\n",mot, A.nom);
 	else    printf("%s N'est PAS reconnu par %s\n",mot, A.nom);
 	return retour;
