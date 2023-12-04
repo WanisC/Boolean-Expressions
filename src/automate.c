@@ -184,7 +184,7 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 // 6. Suppression des epsilon-transitions
 //###
 
-AUTOMATE supprime_epsilon_transitions (AUTOMATE A) { //! Dans le cas où j'ai plusieurs transitions epsilon, je ne sais pas comment faire
+AUTOMATE supprime_epsilon_transitions (AUTOMATE A) { //! Certaines transitions sont ajoutées plusieurs fois, il faut corriger ça
 	// Pour chaque état q1
 	for (unsigned int q1 = 0; q1 < A.N; ++q1) {
 		struct transition *curr = A.T;
@@ -194,24 +194,39 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) { //! Dans le cas où j'ai pl
 		while (curr) {
 			// On cherche les transitions (q1,epsilon,q2)
 			if (curr->p == q1 && curr->a == 0) {
-				printf("	1.1. Transition epsilon (%d,%c,%d)\n", curr->p, affcar(curr->a), curr->q);
+				printf("	1. Transition epsilon (%d,%c,%d)\n", curr->p, affcar(curr->a), curr->q);
 				// On initialise l'état q3 que l'on va actualiser dans le cas d'une transition epsilon
 				unsigned int q3 = curr->q;
-				printf("		1.2. Etat q3 %d\n", q3);
+				printf("		1.1. Etat q3 %d\n", q3);
 				struct transition *curr2 = A.T;
-				printf("		1.3. Recherche des transitions depuis q3\n");
+				printf("		1.2. Recherche des transitions depuis q3\n");
 				while (curr2) {
-					// Cas: on trouve une transition non epsilon
+					// Cas: on trouve une transition non epsilon //! ici on peut avoir des doublons
 					if (curr2->p == q3 && curr2->a != 0) {
-						printf("		2.1. Transition NON epsilon trouvée (%d,%c,%d)\n", curr2->p, affcar(curr2->a), curr2->q);
+						printf("		2. Transition NON epsilon trouvée (%d,%c,%d)\n", curr2->p, affcar(curr2->a), curr2->q);
 						// On ajoute la transition (q1,a,q3)
 						A = ajoute_une_transition(A, q1, curr2->a, curr2->q);
-						printf("		2.2. Transition ajoutée (%d,%c,%d)\n", q1, affcar(curr2->a), curr2->q);
+						printf("		2.1. Transition ajoutée (%d,%c,%d)\n", q1, affcar(curr2->a), curr2->q);
 						curr2 = curr2->suiv;
 					}
 					// Cas: on tombe sur une transition epsilon
 					else if (curr2->p == q3 && curr2->a == 0) {
-						printf("		2.3. Transition epsilon (%d,%c,%d)\n", curr2->p, affcar(curr2->a), curr2->q);
+						// Il peut y avoir plusieurs transitions epsilon depuis q3
+						// On doit donc les traiter
+						printf("			2. Transition epsilon (%d,%c,%d)\n", curr2->p, affcar(curr2->a), curr2->q);
+						struct transition *curr3 = A.T;
+						while (curr3) {
+							if (curr3->p == q3 && curr3->a != 0) {
+								printf("			2.1. Transition NON epsilon trouvée (%d,%c,%d)\n", curr3->p, affcar(curr3->a), curr3->q);
+								// On ajoute la transition (q1,a,q3)
+								A = ajoute_une_transition(A, q1, curr3->a, curr3->q);
+								printf("			2.2. Transition ajoutée (%d,%c,%d)\n", q1, affcar(curr3->a), curr3->q);
+								curr3 = curr3->suiv;
+							} else {
+								curr3 = curr3->suiv;
+							}
+						}
+						free(curr3);
 						q3 = curr2->q;
 						curr2 = A.T;
 					} else {
@@ -219,10 +234,12 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) { //! Dans le cas où j'ai pl
 					}
 				}
 				curr = curr->suiv;
+				free(curr2);
 			} else {
 				curr = curr->suiv;
 			}
 		}
+		free(curr);
 	}
 	
 	// Phase 2 : Suppression des transitions epsilon
