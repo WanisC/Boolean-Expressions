@@ -184,51 +184,43 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 // 6. Suppression des epsilon-transitions
 //###
 
-AUTOMATE supprime_epsilon_transitions (AUTOMATE A) { //! Certaines transitions sont ajoutées plusieurs fois, il faut corriger ça
+AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
+
 	// Pour chaque état q1
 	for (unsigned int q1 = 0; q1 < A.N; ++q1) {
 		struct transition *curr = A.T;
-		printf("Etat %d\n", q1);
+		//printf("Etat %d\n", q1);
 		
 		// Tant qu'il y a des transitions
 		while (curr) {
 			// On cherche les transitions (q1,epsilon,q2)
 			if (curr->p == q1 && curr->a == 0) {
-				printf("	1. Transition epsilon (%d,%c,%d)\n", curr->p, affcar(curr->a), curr->q);
+				//printf("	1. Transition epsilon (%d,%c,%d)\n", curr->p, affcar(curr->a), curr->q);
 				// On initialise l'état q3 que l'on va actualiser dans le cas d'une transition epsilon
-				unsigned int q3 = curr->q;
-				printf("		1.1. Etat q3 %d\n", q3);
+				//printf("		1.1. Etat q3 %d\n", curr->q);
 				struct transition *curr2 = A.T;
-				printf("		1.2. Recherche des transitions depuis q3\n");
+				//printf("		1.2. Recherche des transitions depuis q3\n");
 				while (curr2) {
-					// Cas: on trouve une transition non epsilon //! ici on peut avoir des doublons
-					if (curr2->p == q3 && curr2->a != 0) {
-						printf("		2. Transition NON epsilon trouvée (%d,%c,%d)\n", curr2->p, affcar(curr2->a), curr2->q);
-						// On ajoute la transition (q1,a,q3)
-						A = ajoute_une_transition(A, q1, curr2->a, curr2->q);
-						printf("		2.1. Transition ajoutée (%d,%c,%d)\n", q1, affcar(curr2->a), curr2->q);
-						curr2 = curr2->suiv;
-					}
-					// Cas: on tombe sur une transition epsilon
-					else if (curr2->p == q3 && curr2->a == 0) {
-						// Il peut y avoir plusieurs transitions epsilon depuis q3
-						// On doit donc les traiter
-						printf("			2. Transition epsilon (%d,%c,%d)\n", curr2->p, affcar(curr2->a), curr2->q);
-						struct transition *curr3 = A.T;
-						while (curr3) {
-							if (curr3->p == q3 && curr3->a != 0) {
-								printf("			2.1. Transition NON epsilon trouvée (%d,%c,%d)\n", curr3->p, affcar(curr3->a), curr3->q);
-								// On ajoute la transition (q1,a,q3)
-								A = ajoute_une_transition(A, q1, curr3->a, curr3->q);
-								printf("			2.2. Transition ajoutée (%d,%c,%d)\n", q1, affcar(curr3->a), curr3->q);
-								curr3 = curr3->suiv;
-							} else {
-								curr3 = curr3->suiv;
+					// Cas: on trouve une transition non epsilon
+					if (curr2->p == curr->q && curr2->a != 0) {
+						struct transition *verif = A.T; // On vérifie que la transition n'existe pas déjà
+						int is_in = 0;
+						while (verif) {
+							// Cas: la transition existe déjà
+							if (verif->p == q1 && verif->a == curr2->a && verif->q == curr2->q) {
+								//printf("		1.3. Transition déjà présente (%d,%c,%d)\n", curr2->p, affcar(curr2->a), curr2->q);
+								is_in = 1;
+								break;
 							}
+							verif = verif->suiv;
 						}
-						free(curr3);
-						q3 = curr2->q;
-						curr2 = A.T;
+						if (!is_in) {
+							//printf("		2. Transition NON epsilon trouvée (%d,%c,%d)\n", curr2->p, affcar(curr2->a), curr2->q);
+							// On ajoute la transition (q1,a,q3)
+							A = ajoute_une_transition(A, q1, curr2->a, curr2->q);
+							//printf("		2.1. Transition ajoutée (%d,%c,%d)\n", q1, affcar(curr2->a), curr2->q);
+							curr2 = curr2->suiv;
+						} else curr2 = curr2->suiv;
 					} else {
 						curr2 = curr2->suiv;
 					}
@@ -243,16 +235,18 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) { //! Certaines transitions s
 	}
 	
 	// Phase 2 : Suppression des transitions epsilon
-	// struct transition *t2 = A.T;
-	// while (t2 != NULL) { // On cherche les transitions (q1,epsilon,q2)
-	// 	if (t2->a == epsilon) {
-	// 		struct transition *t3 = t2->suiv;
-	// 		A.T->suiv = t3;
-	// 		free(t2);
-	// 		t2 = t3;
-	// 	}
-	// 	else t2 = t2->suiv;
-	// }
+	struct transition *supp_e = A.T;
+	while (supp_e) {
+		// Cas: la transition n'est pas epsilon
+		if (supp_e->a != 0) supp_e = supp_e->suiv;
+		else {
+			struct transition *temp = supp_e->suiv;
+			A.T = supp_e;
+			A.T->suiv = temp;
+			supp_e = supp_e->suiv;
+			A.nb_trans--;
+		}
+	}
 	return A;
 }
 
