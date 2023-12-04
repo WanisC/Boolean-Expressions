@@ -236,15 +236,31 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 	
 	// Phase 2 : Suppression des transitions epsilon
 	struct transition *supp_e = A.T;
+	struct transition *prev = NULL;
+
 	while (supp_e) {
-		// Cas: la transition n'est pas epsilon
-		if (supp_e->a != 0) supp_e = supp_e->suiv;
-		else {
-			struct transition *temp = supp_e->suiv;
-			A.T = supp_e;
-			A.T->suiv = temp;
-			supp_e = supp_e->suiv;
+		// Cas: c'est une transition epsilon
+		if (supp_e->a == 0) {
+			// On prend la transition suivante
+			struct transition *next = supp_e->suiv;
+			// On libère la mémoire de la transition epsilon
+			free(supp_e);
+			// On met à jour les pointeurs
+			// Cas: c'est la première transition
+			if (prev == NULL) {
+				A.T = next; 
+			// Cas: ce n'est pas la première transition
+			} else {
+				prev->suiv = next;
+			}
+			// On passe à la transition suivante
+			supp_e = next;
+			// On décrémente le nombre de transitions
 			A.nb_trans--;
+		// Cas: ce n'est pas une transition epsilon
+		} else { // On passe simplement à la transition suivante
+			prev = supp_e;
+			supp_e = supp_e->suiv;
 		}
 	}
 	return A;
