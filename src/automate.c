@@ -214,22 +214,22 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 				//printf("		1.1. Etat Q2: %d\n", q2);
 
 				// On va parcourir les transitions de A depuis q2
-				struct transition *q3_trans = A.T;
+				struct transition *q2_trans = A.T;
 
 				//printf("		1.2. Recherche des transitions depuis q2\n");
-				while (q3_trans) {
+				while (q2_trans) {
 
 					// Cas: on trouve une transition non epsilon
-					if (q3_trans->p == q2 && q3_trans->a != 0) {
-						//printf("			Transition non epsilon trouvée: (%d,%c,%d)\n", q2, affcar(q3_trans->a), q3_trans->q);
-						//printf("			- Vérifions si la transition (%d,%c,%d) existe déjà\n", q1, affcar(q3_trans->a), q3_trans->q);
+					if (q2_trans->p == q2 && q2_trans->a != 0) {
+						//printf("			Transition non epsilon trouvée: (%d,%c,%d)\n", q2, affcar(q2_trans->a), q2_trans->q);
+						//printf("			- Vérifions si la transition (%d,%c,%d) existe déjà\n", q1, affcar(q2_trans->a), q2_trans->q);
 
 						// Cas: la transition n'existe pas
-						if (!transition_presente(A, q1, q3_trans->a, q3_trans->q)) {
-							//printf("				|-Transition (%d,%c,%d) NON présente\n", q1, affcar(q3_trans->a), q3_trans->q);
+						if (!transition_presente(A, q1, q2_trans->a, q2_trans->q)) {
+							//printf("				|-Transition (%d,%c,%d) NON présente\n", q1, affcar(q2_trans->a), q2_trans->q);
 
 							// On ajoute la transition (q1,a,q3)
-							A = ajoute_une_transition(A, q1, q3_trans->a, q3_trans->q);
+							A = ajoute_une_transition(A, q1, q2_trans->a, q2_trans->q);
 							//printf("				|-Transition ajoutée\n");
 
 							// On regarde si q2 est un état final pour modifier q1 si besoin
@@ -237,13 +237,13 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 								etat_final_ON(A, q1);
 							}
 						}
-						q3_trans = q3_trans->suiv;
+						q2_trans = q2_trans->suiv;
 
 					// Cas: on trouve une transition epsilon
-					} else if (q3_trans->p == q2 && q3_trans->a == 0) {
-						//printf("			Transition epsilon (%d,%c,%d)\n", q3_trans->p, affcar(q3_trans->a), q3_trans->q);
+					} else if (q2_trans->p == q2 && q2_trans->a == 0) {
+						//printf("			Transition epsilon (%d,%c,%d)\n", q2_trans->p, affcar(q2_trans->a), q2_trans->q);
 
-						q2 = q3_trans->q; // On démarre la recherche depuis q2
+						q2 = q2_trans->q; // On démarre la recherche depuis q2
 						//printf("			Recherche des transitions depuis: %d\n", q2);
 
 						struct transition *q4_trans = A.T;
@@ -267,14 +267,14 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 									}
 								}
 								// On passe à la transition suivante et on actualise q2
-								q3_trans = q3_trans->suiv;
-								q2 = q3_trans->p;
+								q2_trans = q2_trans->suiv;
+								q2 = q2_trans->p;
 								break;
 							} else q4_trans = q4_trans->suiv;
 						}
-					} else q3_trans = q3_trans->suiv;
+					} else q2_trans = q2_trans->suiv;
 				}
-				free(q3_trans);
+				free(q2_trans);
 			}
 			simple_trans = simple_trans->suiv;
 		}
@@ -318,7 +318,75 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 //###
 
 AUTOMATE determinise (AUTOMATE A) {
-	return A;
+	// On va créer un tableau de lettres
+	char letters[26];
+	for (int i = 0; i < 26; i++) {
+		letters[i] = 'a' + i;
+	}
+	// On va construire un nouvel automate qui sera déterministe
+	AUTOMATE A_deter = creer_automate("A_deter", 0);
+
+	// Pour chaque état dans A
+	for (unsigned int q1 = 0; q1 < A.N; q1++) {
+		printf("Etat Q1: %d\n", q1);
+		// On va regarder pour chaque lettre
+		// Les successeurs de q1 avec la lettre courante et les ajouter à un ensemble
+		// Qui sera un état de l'automate déterministe
+		for (int i = 0; i < 26; i++) {
+			printf("	Lettre %c\n", letters[i]);
+			unsigned int heap[A.N]; // On va stocker les états successeurs de q1
+			int index = 0; // Index pour la variable heap
+			char curr_letter = letters[i]; // Lettre courante
+			int is_final = 0; // Booléen pour savoir si l'état est final
+			struct transition *curr = A.T; // Pointeur pour parcourir les transitions
+			// Tant qu'il y a des transitions
+			while (curr) {
+				//printf("		- Passage dans la boucle\n");
+				//printf("		Transition (%d,%c,%d)\n", curr->p, affcar(curr->a), curr->q);
+				// Si on trouve une transition (q1,curr_letter,q2)
+				if (curr->p == q1 && curr->a == letters[i]) {
+					// On ajoute q2 à l'ensemble que l'on va ajouter à l'automate déterministe
+					printf("			Insertion: %d\n", curr->q);
+					heap[index] = curr->q;
+					// On regarde si q2 est un état final, si oui, on le note
+					if (A.F[curr->q]) {
+						is_final = 1;
+					}
+					// On incrémente l'index pour ne pas écraser l'élément actuel
+					index++;
+				}
+				// On oublie pas de passer à la transition suivante
+				curr = curr->suiv;
+			}
+			// Après avoir regardé toutes les transitions, on ajoute l'ensemble à l'automate déterministe
+			printf("	Taille de heap: %d\n", index);
+			if (index > 0) {
+				printf("	Affichage des éléments de heap:\n");
+				for (int j = 0; j < index; j++) {
+					printf("    		%d\n", heap[j]);
+				}
+			}
+
+			for (int j = 0; j < index; j++) {
+				printf("	Dans la boucle FOR avec heap[%d] = %d\n", j, heap[j]);
+				// On doit augmenter le nombre d'états de l'automate déterministe pour pouvoir ajouter la transition (voir les structures conditionnelles des fonctions ajoute_une_transition)
+				if (A_deter.N < heap[j]) {
+					A_deter.N = heap[j] + 1;
+				}
+				A_deter = ajoute_une_transition(A_deter, q1, curr_letter, heap[j]); //! d'abord on va essayer de faire fonctionner le programme, en insérant des états qui ne sont pas des ensemble d'états 
+				printf("		Transition ajoutée (%d,%c,%d)\n", q1, affcar(curr_letter), heap[j]);
+				printf("		Nombre d'états: %d\n		Nombre_transitions: %d\n", A_deter.N, A_deter.nb_trans);
+				
+				// On regarde si on avait bien un état final dans l'ensemble heap
+				if (is_final) {
+					etat_final_ON(A_deter, heap[j]); //! problème au niveau des états finaux
+				}
+			}
+		}
+	}
+	// On change notre automate A en automate déterministe
+	A = A_deter;
+	return A; //! est-il déterministe complet ?
 }
 
 //###
@@ -328,6 +396,7 @@ AUTOMATE determinise (AUTOMATE A) {
 AUTOMATE minimise (AUTOMATE A) {
 	return A;
 }
+
 
 
 //###
@@ -354,6 +423,6 @@ int reconnait (AUTOMATE A, char *mot) {
 	}
 	retour = A.F[curr_etat]; // Si l'état dans lequel est final alors le mot est reconnu, sinon non
 	if (retour) printf("%s EST RECONNU PAR %s\n", mot, A.nom);
-	else    printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
+	else    	printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
 	return retour;
 }
