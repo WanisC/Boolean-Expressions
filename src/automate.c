@@ -186,11 +186,15 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 
 // Renvoie vrai si la transition (p,a,q) est dans l'automate A
 int transition_presente (AUTOMATE A, unsigned int p, char a, unsigned int q) {
+	// On va parcourir les transitions de A
 	struct transition *t = A.T;
 	while (t) {
+		// Si on trouve la transition (p,a,q) alors on renvoie vrai
 		if (t->p == p && t->a == a && t->q == q) return 1;
+		// Sinon on passe à la transition suivante
 		t = t->suiv;
 	}
+	// Si on arrive ici alors la transition n'est pas présente dans A
 	return 0;
 }
 
@@ -201,8 +205,6 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 
 		// On va parcourir les transitions de A
 		struct transition *simple_trans = A.T;
-		
-		// Tant qu'il y a des transitions
 		while (simple_trans) {
 
 			// Cas: c'est une transition epsilon avec q1 comme état de départ
@@ -217,6 +219,7 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 				struct transition *q2_trans = A.T;
 
 				//printf("		1.2. Recherche des transitions depuis q2\n");
+				// On va parcourir les transitions de A depuis q2
 				while (q2_trans) {
 
 					// Cas: on trouve une transition non epsilon
@@ -246,6 +249,7 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 						q2 = q2_trans->q; // On démarre la recherche depuis q2
 						//printf("			Recherche des transitions depuis: %d\n", q2);
 
+						// On va parcourir les transitions de A depuis q2
 						struct transition *q4_trans = A.T;
 						while (q4_trans) {
 							// Cas: on trouve une transition non epsilon
@@ -280,11 +284,10 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 		}
 		free(simple_trans);
 	}
-	
-	// Suppression des transitions epsilon
+
+	// On va parcourir les transitions de A pour trouver les transitions epsilon et les supprimer
 	struct transition *supp_e = A.T;
 	struct transition *prev = NULL;
-	// Tant qu'il y a des transitions
 	while (supp_e) {
 		// Cas: c'est une transition epsilon
 		if (supp_e->a == 0) {
@@ -317,14 +320,38 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 // 7. Déterminisation
 //###
 
-AUTOMATE determinise (AUTOMATE A) {
+// Cherche si l'état est déjà présent dans un ensemble d'états, si oui alors on renvoie l'ensemble d'états, sinon on renvoie un ensemble d'états avec seulement l'état
+unsigned int *cherche_etat(AUTOMATE A, unsigned int etat) {
+	// Pour chaque ensemble d'états
+	for (unsigned int ens = 0; ens < A.N; ens++) {
+		// Pour chaque état dans l'ensemble d'états
+		for (unsigned int q1 = 0; q1 < sizeof(ens); q1++) {
+			// Si on arrive à matcher l'état avec un état de l'ensemble d'états
+			if (q1 == etat) {
+				// On reconstruit l'ensemble d'états car on ne peut pas simplement retourner ens
+				unsigned int *ensemble = malloc(sizeof(unsigned int));
+				int i = 0;
+				for (unsigned int q2 = 0; q2 < sizeof(ens); q2++) {
+					ensemble[i] = q2;
+				}
+				return ensemble;
+			}
+		}
+	}
+	// Si on se trouve ici alors l'état n'est dans aucun ensemble d'états donc on le crée 
+	unsigned int *ensemble = malloc(sizeof(unsigned int));
+	ensemble[0] = etat;
+	return ensemble;
+}
+
+AUTOMATE determinise (AUTOMATE A) { //! quand on a fini avec le premier état notre prochain n'est pas le deuxième état mais celui qui vient d'être ajouté
 	// On va créer un tableau de lettres
 	char letters[26];
 	for (int i = 0; i < 26; i++) {
 		letters[i] = 'a' + i;
 	}
 	// On va construire un nouvel automate qui sera déterministe
-	AUTOMATE A_deter = creer_automate("A_deter", 0);
+	AUTOMATE A_determinise = creer_automate("A_determinise", 0);
 
 	// Pour chaque état dans A
 	for (unsigned int q1 = 0; q1 < A.N; q1++) {
@@ -333,30 +360,30 @@ AUTOMATE determinise (AUTOMATE A) {
 		// Les successeurs de q1 avec la lettre courante et les ajouter à un ensemble
 		// Qui sera un état de l'automate déterministe
 		for (int i = 0; i < 26; i++) {
-			printf("	Lettre %c\n", letters[i]);
+			char curr_letter = letters[i]; // Lettre courante
+			printf("	Lettre courante: %c\n", curr_letter);
 			unsigned int heap[A.N]; // On va stocker les états successeurs de q1
 			int index = 0; // Index pour la variable heap
-			char curr_letter = letters[i]; // Lettre courante
-			int is_final = 0; // Booléen pour savoir si l'état est final
-			struct transition *curr = A.T; // Pointeur pour parcourir les transitions
+			int is_final = 0; // Booléen pour savoir si on tombe à un moment sur un état final
+			struct transition *q1_trans = A.T; // Pointeur pour parcourir les transitions depuis q1
 			// Tant qu'il y a des transitions
-			while (curr) {
-				//printf("		- Passage dans la boucle\n");
-				//printf("		Transition (%d,%c,%d)\n", curr->p, affcar(curr->a), curr->q);
-				// Si on trouve une transition (q1,curr_letter,q2)
-				if (curr->p == q1 && curr->a == letters[i]) {
+			while (q1_trans) {
+				// Si on trouve une transition (q1,q1_trans_letter,q2)
+				if (q1_trans->p == q1 && q1_trans->a == letters[i]) {
+					printf("			Transition (%d,%c,%d) trouvée\n", q1_trans->p, affcar(q1_trans->a), q1_trans->q);
 					// On ajoute q2 à l'ensemble que l'on va ajouter à l'automate déterministe
-					printf("			Insertion: %d\n", curr->q);
-					heap[index] = curr->q;
-					// On regarde si q2 est un état final, si oui, on le note
-					if (A.F[curr->q]) {
+					printf("			Insertion dans heap de: %d\n", q1_trans->q);
+					heap[index] = q1_trans->q;
+					// On regarde si q1_trans->q (q2) est un état final, si oui, on le note
+					if (A.F[q1_trans->q]) {
+						printf("			%d est final\n", q1_trans->q);
 						is_final = 1;
 					}
 					// On incrémente l'index pour ne pas écraser l'élément actuel
 					index++;
 				}
 				// On oublie pas de passer à la transition suivante
-				curr = curr->suiv;
+				q1_trans = q1_trans->suiv;
 			}
 			// Après avoir regardé toutes les transitions, on ajoute l'ensemble à l'automate déterministe
 			printf("	Taille de heap: %d\n", index);
@@ -370,23 +397,22 @@ AUTOMATE determinise (AUTOMATE A) {
 			for (int j = 0; j < index; j++) {
 				printf("	Dans la boucle FOR avec heap[%d] = %d\n", j, heap[j]);
 				// On doit augmenter le nombre d'états de l'automate déterministe pour pouvoir ajouter la transition (voir les structures conditionnelles des fonctions ajoute_une_transition)
-				if (A_deter.N < heap[j]) {
-					A_deter.N = heap[j] + 1;
+				if (A_determinise.N < heap[j]) {
+					A_determinise.N = heap[j] + 1;
 				}
-				A_deter = ajoute_une_transition(A_deter, q1, curr_letter, heap[j]); //! d'abord on va essayer de faire fonctionner le programme, en insérant des états qui ne sont pas des ensemble d'états 
+				A_determinise = ajoute_une_transition(A_determinise, q1, curr_letter, heap[j]); //! d'abord on va essayer de faire fonctionner le programme, en insérant des états qui ne sont pas des ensemble d'états 
 				printf("		Transition ajoutée (%d,%c,%d)\n", q1, affcar(curr_letter), heap[j]);
-				printf("		Nombre d'états: %d\n		Nombre_transitions: %d\n", A_deter.N, A_deter.nb_trans);
+				printf("		Nombre d'états: %d\n		Nombre_transitions: %d\n", A_determinise.N, A_determinise.nb_trans);
 				
 				// On regarde si on avait bien un état final dans l'ensemble heap
 				if (is_final) {
-					etat_final_ON(A_deter, heap[j]); //! problème au niveau des états finaux
+					etat_final_ON(A_determinise, heap[j]); //! problème au niveau des états finaux
 				}
 			}
 		}
 	}
-	// On change notre automate A en automate déterministe
-	A = A_deter;
-	return A; //! est-il déterministe complet ?
+	A = A_determinise;
+	return A;
 }
 
 //###
