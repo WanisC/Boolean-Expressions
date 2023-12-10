@@ -16,7 +16,7 @@
 
 [a-z]  {return LETTRE;}
 "+"     {return UNION;}
-"."     {return CONCAT;}
+"\."     {return CONCAT;}
 "*"     {return ETOILE;}
 "E"     {return EPSILON;}
 "0"     {return VIDE;}
@@ -25,4 +25,4 @@
 \n      {} /* on aura besoin du saut de lignes pour notre fichier test1 */
 [ \.\t]   {}
 
-%%
+%% 

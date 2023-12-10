@@ -33,6 +33,10 @@ regexp.tab.c: regexp.y
 # -v pour générer le fichier exo01.output
 # -g pour générer le fichier exo01.vcg
 
+test: regexp.l
+	./regexp.l < test.1
+	
+
 regexp.yy.c: regexp.l
 	flex -o $@ $^
 
