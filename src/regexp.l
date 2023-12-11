@@ -13,17 +13,17 @@
 %}
 
 %%
-"("     { printf("%d ",PAR_O);      return PAR_O; }
-")"     { printf("%d ",PAR_F);      return PAR_F; }
-[a-z]   { printf("%s ",yytext);     return LETTRE; }
-"+"     { printf("%d ",UNION);      return UNION; }
-"."     { printf("%d ",CONCAT);     return CONCAT; }
-"*"     { printf("%d ",ETOILE);     return ETOILE; }
-"E"     { printf("%d ",EPSILON);    return EPSILON; }
-"0"     { printf("%d ",VIDE);       return VIDE; }
+"("     { printf("(",PAR_O);    return PAR_O;   }
+")"     { printf(")",PAR_F);    return PAR_F;   }
+[a-z]   { printf("%s",yytext);  return LETTRE;  }
+"+"     { printf("+");          return UNION;   }
+"."     { printf(".");          return CONCAT;  }
+"*"     { printf("*");          return ETOILE;  }
+"E"     { printf("E",EPSILON);  return EPSILON; }
+"0"     { printf("0",VIDE);     return VIDE;    }
 
-\n      {printf("%s \n", yytext);} /* on aura besoin du saut de lignes pour notre fichier test1 */
-[ \.\t]   {}
+\n      { printf("\n"); } /* on aura besoin du saut de lignes pour notre fichier test1 */
+[ \.\t] {}
 
 %% 
 
