@@ -33,12 +33,14 @@ regexp.tab.c: regexp.y
 # -v pour générer le fichier exo01.output
 # -g pour générer le fichier exo01.vcg
 
-test: regexp.l
-	./regexp.l < test.1
+test: regexp.yy.c
+	gcc -o regexptest $^ ${LDFLAGS} -ll
 	
+exetest: regexptest
+	./$^ < test.1
 
 regexp.yy.c: regexp.l
-	flex -o $@ $^
+	flex  -o $@ $^
 
 install:
 	sudo apt-get install -y libbison-dev
@@ -52,6 +54,7 @@ clean:
 	rm -f *.tab.c *.tab.h
 	rm -f *.yy.c
 	rm -f regexp
+	rm -f regexptest
 	rm -rf ${LADIR}
 	rm -f ${LADIR}.zip
 	ls -als
