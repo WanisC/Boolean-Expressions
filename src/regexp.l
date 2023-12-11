@@ -13,14 +13,14 @@
 %}
 
 %%
-"("    {printf("%d ",PAR_O);return PAR_O;}
-")"    {printf("%d ",PAR_F);return PAR_F;}
-[a-z]  {printf("%s ",yytext);return yytext;}
-"+"    {printf("%d ",UNION); return UNION;}
-"."   {printf("%d ",CONCAT);return CONCAT;}
-"*"    {printf("%d ",ETOILE);return ETOILE;}
-"E"    {printf("%d ",EPSILON);return EPSILON;}
-"0"    {printf("%d ",VIDE);return VIDE;}
+"("     { printf("%d ",PAR_O);      return PAR_O; }
+")"     { printf("%d ",PAR_F);      return PAR_F; }
+[a-z]   { printf("%s ",yytext);     return LETTRE; }
+"+"     { printf("%d ",UNION);      return UNION; }
+"."     { printf("%d ",CONCAT);     return CONCAT; }
+"*"     { printf("%d ",ETOILE);     return ETOILE; }
+"E"     { printf("%d ",EPSILON);    return EPSILON; }
+"0"     { printf("%d ",VIDE);       return VIDE; }
 
 \n      {printf("%s \n", yytext);} /* on aura besoin du saut de lignes pour notre fichier test1 */
 [ \.\t]   {}
@@ -29,10 +29,9 @@
 
 int main() {
     int retour;
-while (retour !=0)
-{
-    retour = yylex();
-}; 
+    while (retour !=0) {
+        retour = yylex();
+    }
 };
 
 /* pour lancer l'analyse syntaxique faire dans le teminal les commande suivantes:  
