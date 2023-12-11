@@ -13,28 +13,22 @@
 %}
 
 %%
-"("     { printf("(",PAR_O);    return PAR_O;   }
-")"     { printf(")",PAR_F);    return PAR_F;   }
-[a-z]   { printf("%s",yytext);  return LETTRE;  }
-"+"     { printf("+");          return UNION;   }
-"."     { printf(".");          return CONCAT;  }
-"*"     { printf("*");          return ETOILE;  }
-"E"     { printf("E",EPSILON);  return EPSILON; }
-"0"     { printf("0",VIDE);     return VIDE;    }
-
+[a-z]   { printf("%s", yytext);     return LETTRE;  }
+"+"     { printf("+");              return UNION;   }
+"."     { printf(".");              return CONCAT;  }
+"*"     { printf("*");              return ETOILE;  }
+"("     { printf("(");              return PAR_O;   }
+")"     { printf(")");              return PAR_F;   }
+"E"     { printf("E");              return EPSILON; }
+"0"     { printf("0");              return VIDE;    }
 \n      { printf("\n"); } /* on aura besoin du saut de lignes pour notre fichier test1 */
 [ \.\t] {}
 
 %% 
 
-int main() {
-    int retour;
-    while (retour !=0) {
-        retour = yylex();
-    }
-};
 
-/* pour lancer l'analyse syntaxique faire dans le teminal les commande suivantes:  
+
+/* pour lancer l'analyse syntaxique exécuter dans le terminal les commandes suivantes:  
 make regexp.yy.c
 make test
 make exetest
