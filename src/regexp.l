@@ -1,6 +1,7 @@
 
 %{
 #include "regexp.tab.h"
+#include "automate.c"
 
 
 %}
