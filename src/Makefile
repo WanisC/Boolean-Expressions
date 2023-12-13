@@ -22,9 +22,8 @@ main.c: regexp
 # La première pour les autres systèmes
 # il faut éventuellement remplacer -ll par -lfl
 regexp: regexp.yy.c regexp.tab.c
-#	gcc -o $@ $^ -ly -ll
-	gcc -o $@ $^ ${LDFLAGS} -ly -lfl
-	
+	gcc -o $@ $^ -ly -ll
+#	gcc -o $@ $^ ${LDFLAGS} -ly -lfl
 #	gcc -mmacosx-version-min=13.1 -o $@ $^ ${LDFLAGS} -ly -lfl
 
 regexp.tab.c: regexp.y
@@ -70,4 +69,3 @@ zip:
 	rm -f ${LADIR}.zip
 	zip -r ${LADIR}.zip ${LADIR}
 	rm -rf ${LADIR}
-
