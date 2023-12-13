@@ -1,13 +1,12 @@
 
 %{
 #include "regexp.tab.h"
-#include "automate.c"
 
 
 %}
 
 %%
-[a-z]   { printf("%s", yytext); yylval.str = strdup(yytext); return LETTRE;  }
+[a-z]   { printf("%s", yytext); yylval.str = strdup(yytext); return LETTRE; }
 "+"     { printf("+");              return UNION;   }
 "."     { printf(".");              return CONCAT;  }
 "*"     { printf("*");              return ETOILE;  }

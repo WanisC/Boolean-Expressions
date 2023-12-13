@@ -11,32 +11,29 @@ char* concatenerChaines(const char** chaines, int nombreDeChaines);
 %}
 
 %union{
-char* str;
+    char* str;
 }
 
-%token <str> LETTRE EPSILON VIDE
-%token <str>PAR_O PAR_F
-%token <str>ETOILE
-%left <str>CONCAT UNION 
-%type <str> expression 
+%token  <str> LETTRE EPSILON VIDE
+%left   <str> UNION 
+%left   <str> CONCAT 
+%token  <str> ETOILE
+%token  <str> PAR_O PAR_F
+%type   <str> expression 
 %%
+
 sortie : 
-        expression  {printf("%s ;\n",$1);}
+        expression  { printf("%s ;\n",$1); }
     ;
 
 expression : 
-        expression CONCAT expression {   const char* listeChaines[] = {"concat_automate(",$1,",",$3," )"} ; $$ = concatenerChaines(listeChaines,5);}
-
-    |   expression UNION expression {const char* listeChaines[] = {"union_automate(",$1,",",$3,") "};$$ = concatenerChaines(listeChaines,5);}
-
-    |   expression ETOILE  {const char* listeChaines[] = {"etoile_automate(",$1,") "};$$ = concatenerChaines(listeChaines,3);}
-
-    |   PAR_O expression PAR_F {const char* listeChaines[] = {"(",$2,")"};$$ = concatenerChaines(listeChaines,3);}
-
-    |   LETTRE { const char* listeChaines[] = {"concat_automate(",$1,")"};$$ = concatenerChaines(listeChaines,3);}
-
-    |   EPSILON {const char* listeChaines[] = {"concat_automate(",$1,")"};$$ = concatenerChaines(listeChaines,3);}
-    |   VIDE {const char* listeChaines[] = {"concat_automate(",$1,",1)"};$$ = concatenerChaines(listeChaines,3);}
+        expression CONCAT expression    { const char* listeChaines[] = {"concat_automate(%c, %c)", $1, $3};   $$ = concatenerChaines(listeChaines, 5); }
+    |   expression UNION expression     { const char* listeChaines[] = {"union_automate(%c, %c)", $1, $3};    $$ = concatenerChaines(listeChaines, 5); }
+    |   expression ETOILE               { const char* listeChaines[] = {"etoile_automate(%c)", $1};           $$ = concatenerChaines(listeChaines, 3); }
+    |   PAR_O expression PAR_F          { const char* listeChaines[] = {"(%c)", $2};                          $$ = concatenerChaines(listeChaines, 3); }
+    |   LETTRE                          { const char* listeChaines[] = {"creer_automate_une_lettre(%c)", $1}; $$ = concatenerChaines(listeChaines, 3); }
+    |   EPSILON                         { const char* listeChaines[] = {"Ɛ"};                                 $$ = concatenerChaines(listeChaines, 3); }
+    |   VIDE                            { const char* listeChaines[] = {"Mot vide"};                          $$ = concatenerChaines(listeChaines, 3); }
     ;
 %%
 
