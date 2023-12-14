@@ -18,7 +18,6 @@ struct transition { // Transition de l'état p vers l'état q avec la lettre a
 	struct transition *suiv;
 };
 
-
 struct automate {
 		char *nom; // Nom de l'automate
 		int N;     // Nombre d'états
