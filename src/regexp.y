@@ -8,32 +8,34 @@ int yylex();
 int yyerror();
 #endif 
 char* concatenerChaines(const char** chaines, int nombreDeChaines);
+char* itc(int entier );
+int cpt = 0;
 %}
 
 %union{
-    char* str;
+char* str;
 }
 
-%token  <str> LETTRE EPSILON VIDE
-%left   <str> UNION 
-%left   <str> CONCAT 
-%token  <str> ETOILE
-%token  <str> PAR_O PAR_F
-%type   <str> expression 
+%token <str> LETTRE EPSILON VIDE
+%left <str> UNION
+%left <str>CONCAT  
+%token <str>ETOILE
+%token <str>PAR_O PAR_F
+%type <str> expression 
 %%
-
 sortie : 
-        expression  { printf("%s ;\n",$1); }
+        expression  {printf("%s \ncpt d'op = %s\n",$1,itc(cpt));}
+        | 
     ;
 
 expression : 
-        expression CONCAT expression    { const char* listeChaines[] = {"concat_automate(%c, %c)", $1, $3};   $$ = concatenerChaines(listeChaines, 5); }
-    |   expression UNION expression     { const char* listeChaines[] = {"union_automate(%c, %c)", $1, $3};    $$ = concatenerChaines(listeChaines, 5); }
-    |   expression ETOILE               { const char* listeChaines[] = {"etoile_automate(%c)", $1};           $$ = concatenerChaines(listeChaines, 3); }
-    |   PAR_O expression PAR_F          { const char* listeChaines[] = {"(%c)", $2};                          $$ = concatenerChaines(listeChaines, 3); }
-    |   LETTRE                          { const char* listeChaines[] = {"creer_automate_une_lettre(%c)", $1}; $$ = concatenerChaines(listeChaines, 3); }
-    |   EPSILON                         { const char* listeChaines[] = {"Ɛ"};                                 $$ = concatenerChaines(listeChaines, 3); }
-    |   VIDE                            { const char* listeChaines[] = {"Mot vide"};                          $$ = concatenerChaines(listeChaines, 3); }
+        expression CONCAT expression    {const char* listeChaines[] = {$1,$3,"exe",itc(cpt),"= concat_automate(exe",itc(cpt-1),",exe",itc(cpt-2),");\n"};   $$ = concatenerChaines(listeChaines,9);cpt ++;}
+    |   expression UNION expression     {const char* listeChaines[] = {$1,$3,"exe",itc(cpt),"= union_automate(exe",itc(cpt-1),",exe",itc(cpt-2),");\n"};    $$ = concatenerChaines(listeChaines,9);cpt ++;}
+    |   expression ETOILE               {const char* listeChaines[] = {$1,"exe",itc(cpt),"= etoile_automate(exe",itc(cpt-1),");\n"};                        $$ = concatenerChaines(listeChaines,6);cpt ++;}
+    |   PAR_O expression PAR_F          {$$ =$2; }
+    |   LETTRE                          {const char* listeChaines[] = {"exe",itc(cpt),"= creer_automate_une_lettre(",$1,");\n"};                            $$ = concatenerChaines(listeChaines,5);cpt ++;}
+    |   EPSILON                         {const char* listeChaines[] = {"exe",itc(cpt),"= creer_automate_une_lettre(E);\n"};                                 $$ = concatenerChaines(listeChaines,3);cpt ++;}
+    |   VIDE                            {const char* listeChaines[] = {"exe",itc(cpt),"= creer_automate(0,1);\n"};                                          $$ = concatenerChaines(listeChaines,3);cpt ++;}
     ;
 %%
 
@@ -73,4 +75,13 @@ char* concatenerChaines(const char** chaines, int nombreDeChaines) {
     chaineResultante[positionActuelle] = '\0';
 
     return chaineResultante;
+}
+
+
+char* itc(int entier ) {
+    char *chaine = (char *)malloc(20 * sizeof(char));
+
+    sprintf(chaine, "%d", entier);
+
+    return chaine;
 }
