@@ -332,8 +332,18 @@ int dejaPresent(char lettre, char *tab, int taille) {
 	return 0;
 }
 
+// Renvoie vrai si l'état est déjà présente dans le tableau
+int dejaPresent_etat(unsigned int etat, unsigned int *tab, int taille) {
+	for (int i = 0; i < taille; i++) {
+		if (tab[i] == etat) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 // Filtre le tableau pour garder que les lettres uniques
-char* filtrage(char *tab, int taille, int *nb_element) {
+char* filtrage_alphabet(char *tab, int taille, int *nb_element) {
 	char *filtreTab = malloc(taille * sizeof(char));
 
 	int index = 0;
@@ -345,6 +355,29 @@ char* filtrage(char *tab, int taille, int *nb_element) {
 		}
 	}
 
+	// On redimensionne le tableau
+	filtreTab = realloc(filtreTab, index * sizeof(char));
+
+	// On met à jour le nombre d'éléments dans le tableau
+    *nb_element = index;
+
+	return filtreTab;
+}
+
+// Filtre le tableau pour garder que les états uniques
+unsigned int* filtrage_etats(unsigned int *tab, int taille, int *nb_element) {
+	unsigned int *filtreTab = malloc(taille * sizeof(char));
+
+	int index = 0;
+
+	for (int i = 0; i < taille; i++) {
+		if (!dejaPresent_etat(tab[i], filtreTab, index)) {
+			filtreTab[index] = tab[i];
+			index++;
+		}
+	}
+
+	// On redimensionne le tableau
 	filtreTab = realloc(filtreTab, index * sizeof(char));
 
 	// On met à jour le nombre d'éléments dans le tableau
@@ -365,6 +398,8 @@ int check_deterministe(AUTOMATE A) {
 	newA = A;
 	// On va parcourir les transitions de newA
 	struct transition *auto_newA = newA.T;
+
+	// Tant qu'il nous reste des transitions
 	while (auto_newA) {
 		// On ajoute la lettre de la transition dans le tableau
 		tab[index] = auto_newA->a;
@@ -373,9 +408,9 @@ int check_deterministe(AUTOMATE A) {
 		auto_newA = auto_newA->suiv;
 	}
 
-	int tab_filtre_size;;
 	// On va filtrer le tableau pour garder que les lettres uniques
-	char *tab_filtre = filtrage(tab, index, &tab_filtre_size);
+	int tab_filtre_size;
+	char *tab_filtre = filtrage_alphabet(tab, index, &tab_filtre_size);
 
 	// On va parcourir tous les états de A
 	for (unsigned int q1 = 0; q1 < A.N; q1++) {
@@ -397,6 +432,8 @@ int check_deterministe(AUTOMATE A) {
 			}
 		}
 	}
+	free(tab);
+	free(tab_filtre);
 	return 1;
 }
 
@@ -421,7 +458,7 @@ AUTOMATE AFD_complet(AUTOMATE A) {
 
 	int tab_filtre_size;;
 	// On va filtrer le tableau pour garder que les lettres uniques
-	char *tab_filtre = filtrage(tab, index, &tab_filtre_size);
+	char *tab_filtre = filtrage_alphabet(tab, index, &tab_filtre_size);
 	
 	// On va ajouter un état poubelle à newA
 	newA.N++;
@@ -453,6 +490,11 @@ AUTOMATE AFD_complet(AUTOMATE A) {
 			}
 		}
 	}
+	
+	// On libère la mémoire
+	free(tab);
+	free(tab_filtre);
+
 	return newA;
 }
 
@@ -461,19 +503,65 @@ struct listeChainee {
 	int clé;
 	int size;
     struct listeChainee *suiv;
-	unsigned int etat[];
+	unsigned int *etat;
 };
+
+// Fonction pour trier un tableau d'entiers
+void triBulles(unsigned int *tableau, int taille) {
+    unsigned int temp;
+
+    for (int i = 0; i < taille - 1; i++) {
+        for (int j = 0; j < taille - i - 1; j++) {
+            // Comparaison et échange si l'élément actuel est plus grand que le suivant
+            if (tableau[j] > tableau[j + 1]) {
+                temp = tableau[j];
+                tableau[j] = tableau[j + 1];
+                tableau[j + 1] = temp;
+            }
+        }
+    }
+}
+
+// Fonction pour ajouter un ensemble d'état dans une liste chaînée d'ensemble d'états
+void ajouter_etat(struct listeChainee *liste, unsigned int *ens, int taille) {
+	
+	struct listeChainee *curr = liste;
+	
+	// Tant qu'on a pas atteint la fin de la liste
+	while (curr->suiv != NULL) {
+		curr = curr->suiv;
+	}
+
+	// On créee un nouvel élément
+	struct listeChainee *nouveau = malloc(sizeof(struct listeChainee));
+	nouveau->clé = curr->clé + 1;
+	nouveau->size = taille;
+	nouveau->etat = malloc(taille * sizeof(unsigned int));
+
+	// Pour chaque élément de ens
+	for (int i = 0; i < taille; i++) {
+		nouveau->etat[i] = ens[i];
+	}
+
+	// On met à jour le pointeur suivant à NULL
+	nouveau->suiv = NULL;
+
+	// On met à jour le pointeur suivant de curr
+	curr->suiv = nouveau;
+}
 
 //! A SUPPRIMER A LA FIN
 // Fonction pour afficher les éléments de la liste 
 void printList(struct listeChainee *head) {
     while (head != NULL) {
-		printf("Clé: %d, ", head->clé);
-		printf("Size : %d, ", head->size);
-		printf("Etat: ");
+		printf("clé: %d, ", head->clé);
+		printf("size : %d, ", head->size);
+		printf("etat: {");
         for (int i = 0; i < head->size; i++) {
-			printf("%d, ", head->etat[i]);
+			if (i == head->size - 1) printf("%d", head->etat[i]);
+			else printf("%d, ", head->etat[i]);
         }
+		printf("}");
         printf("\n");
         head = head->suiv;
     }
@@ -491,11 +579,114 @@ void liberer_chaine(struct listeChainee *chaine) {
     }
 }
 
+
+
+// Fonction qui renvoie un tableau contenant les états successeurs de l'ensemble d'états avec la lettre courante
+unsigned int *tableauArrivee(AUTOMATE A, unsigned int *tab_depart, int taille_tab_depart, char lettre, int *taille_tab_arrivee) {
+	unsigned int *tab_arrivee = malloc(A.N * sizeof(unsigned int));
+	int index = 0;
+
+	// Pour chaque état de tab_depart
+	for (unsigned int q = 0; q < taille_tab_depart; q++) {
+		// On va parcourir les transitions de A
+		struct transition *trans_A = A.T;
+
+		// Tant qu'il nous reste des transitions
+		while (trans_A) {
+			// Si on trouve une transition avec l'état courant et la lettre courante
+			if (trans_A->p == q && trans_A->a == lettre) {
+				tab_arrivee[index] = trans_A->q;
+				index++;
+			}
+			trans_A = trans_A->suiv;
+		}
+	}
+
+	// On redimensionne le tableau
+	tab_arrivee = realloc(tab_arrivee, index * sizeof(unsigned int));
+
+	// On met à jour le nombre d'éléments dans le tableau
+	*taille_tab_arrivee = index;
+
+	// On retourne le tableau
+	return tab_arrivee;
+}
+
+// Fonction pour fusionner plusieurs tableaux et éliminer les doublons
+void fusionnerTableaux(unsigned int *resultat, int *tailleResultat, unsigned int *tableaux[], int *tailles, int nombreDeTableaux) {
+
+	// On regarde si notre tableau est de taille 1
+	if (nombreDeTableaux == 1) {
+		// On retourne simplement le tableau présent dans tableaux
+		resultat = tableaux[0];
+		*tailleResultat = tailles[0];
+		return;
+	}
+
+    // On initiliase la taille du tableau résultat
+    *tailleResultat = 0;
+
+    // On fusionne les tableaux dans le tableau résultat en éliminant les doublons
+    for (int k = 0; k < nombreDeTableaux; k++) {
+        unsigned int *tableauCourant = tableaux[k];
+        int tailleCourante = tailles[k];
+
+        for (int i = 0; i < tailleCourante; i++) {
+			unsigned int elementCourant = tableauCourant[i];
+            int doublon = 0;
+
+            // Vérification si l'élément courant existe déjà dans le tableau résultat
+            for (int j = 0; j < *tailleResultat; j++) {
+                if (resultat[j] == elementCourant) {
+                    doublon = 1;
+                    break;
+                }
+            }
+
+            // Ajout de l'élément au tableau résultat s'il n'est pas un doublon
+            if (!doublon) {
+                resultat[*tailleResultat] = elementCourant;
+                (*tailleResultat)++;
+            }
+        }
+    }
+}
+
+int recherche_cle(struct listeChainee *liste, unsigned int *ens, int taille_ens) {
+	struct listeChainee *curr = liste;
+	int sauv; // Une sauvegarde au cas où ens n'est pas présent dans la liste
+
+	while (curr != NULL) {
+		// On vérifie d'abord que les tailles sont égales
+		if (curr->size == taille_ens) {
+			// On va regarder si l'ensemble d'états est déjà présent dans liste->etat
+			int cpt = 0; // Compteur pour savoir si l'ensemble d'états successeurs est déjà présent dans liste->etat
+			for (int k = 0; k < curr->size; k++) {
+				for (int l = 0; l < curr->size; l++) {
+					if (curr->etat[k] == ens[l]) {
+						cpt++;
+					}
+				}
+			}
+			// Si on a trouvé l'ensemble d'états dans la liste
+			if (cpt == taille_ens) {
+				return curr->clé;
+			}	
+		}
+		sauv = curr->clé;
+		curr = curr->suiv;
+	}
+	// Si on arrive ici, c'est que l'ensemble d'états n'est pas présent dans la liste, on renvoie donc la clé précédente + 1
+	return sauv + 1;
+}
+
 //###
 // 7. Déterminisation
 //###
 // ? https://www.geeksforgeeks.org/data-structures/linked-list/singly-linked-list/
 // ? https://www.learn-c.org/en/Linked_lists
+// ? https://waytolearnx.com/2019/08/fusionner-deux-tableaux-en-c.html (fusionner deux tableaux)
+
 AUTOMATE determinise (AUTOMATE A) {
 
 	// On vérifie si l'automate n'est pas déjà déterministe
@@ -508,6 +699,7 @@ AUTOMATE determinise (AUTOMATE A) {
 	int index = 0;
 	char *tab = malloc(A.nb_trans * sizeof(char));
 	struct transition *auto_A = A.T;
+
 	while (auto_A) {
 		// On ajoute la lettre de la transition dans le tableau
 		tab[index] = auto_A->a;
@@ -515,150 +707,140 @@ AUTOMATE determinise (AUTOMATE A) {
 		// On passe à la transition suivante
 		auto_A = auto_A->suiv;
 	}
-	int tab_filtre_size;;
-	// On va filtrer le tableau pour garder que les lettres uniques
-	char *tab_filtre = filtrage(tab, index, &tab_filtre_size);
 
-	// Affichage de l'alphabet de l'automate //! A SUPPRIMER DANS LA VERSION QUE L'ON REND
+	// On va filtrer le tableau pour ne garder que les lettres uniques
+	int alphabet_size;
+	char *alphabet = filtrage_alphabet(tab, index, &alphabet_size);
+
+	// Affichage de l'alphabet de l'automate //! A SUPPRIMER DANS LA VERSION FINALE
 	printf("Alphabet: ");
-	for (int i = 0; i < tab_filtre_size; i++) {
-		printf("%c ", tab_filtre[i]);
+	for (int i = 0; i < alphabet_size; i++) {
+		printf("%c ", alphabet[i]);
 	}
 	printf("\n");
 
-	int index_etat = 0; // Index pour le tableau d'états
-	int index_cle = 0; // Index pour la clé
-	struct listeChainee *liste = malloc(sizeof(struct listeChainee));
+	// On initialise un index pour la clé
+	int index_cle = 0;
+
 	// On va mettre l'état initial (0) dans liste->etat
-	liste->etat[index_etat] = 0;
-	liste->clé = index_cle;
-	liste->suiv = NULL;
-	liste->size = 1;
-	index_etat++; // On incrémente l'index pour le tableau d'états
-	index_cle++; // On incrémente l'index pour la clé
+	struct listeChainee *ens_etat = malloc(sizeof(struct listeChainee));
+	unsigned int ens_temp[] = {0}; // On va mettre l'état initial (0) dans liste->etat
+	ens_etat->etat = ens_temp;
+	ens_etat->clé = index_cle;
+	ens_etat->suiv = NULL;
+	ens_etat->size = 1;
+
+	// La liste chaînée ARCHIVES va contenir tous les ensembles d'états afin de l'utiliser pour des tests avant d'ajouter un nouvel ensemble d'états
+	struct listeChainee *ARCHIVES = malloc(sizeof(struct listeChainee));
+	ARCHIVES->etat = ens_temp;
+	ARCHIVES->clé = index_cle;
+	ARCHIVES->suiv = NULL;
+	ARCHIVES->size = 1;
+
+	// On incrémente l'index pour la clé
+	index_cle++;
 
 	// On va construire un nouvel automate qui sera déterministe
-	AUTOMATE A_determinise = creer_automate("A_determinise", 0);
+	AUTOMATE A_determinise = creer_automate(A.nom, 0);
 
-	// On va regarder pour chaque état dans liste->etat
-	for (int i = 0; i < liste->size; i++) {
-		// Affichage de l'ensemble d'états courant //! A SUPPRIMER DANS LA VERSION QUE L'ON REND
-		printf("Ensemble courant: ");
-		for (int k = 0; k < liste->size; k++) {
-			printf("%d ", liste->etat[k]);
+	// Tant qu'il nous reste des ensembles d'états à traiter
+	while (ens_etat) {
+		// Affichage de l'ensemble d'états courant //! A SUPPRIMER DANS LA VERSION FINALE
+		printf("Ensemble courant: {");
+		for (int k = 0; k < ens_etat->size; k++) {
+			if (k == ens_etat->size - 1) printf("%d}", ens_etat->etat[k]);
+			else printf("%d, ", ens_etat->etat[k]);
 		}
 		printf("\n");
-		unsigned int q1 = liste->etat[i]; // On récupère l'état courant
-		printf("Etat Q1: %d\n", q1);
-		// On va regarder pour chaque lettre de l'alphabet
-		for (int j = 0; j < tab_filtre_size; j++) {
-			char curr_letter = tab_filtre[j]; // Lettre courante
-			printf("	Lettre courante: %c\n", curr_letter);
-			// On va mettre les états successeurs de q1 avec la lettre courante dans un tableau qui sera ensuite donné à liste->etat
-			unsigned int *successeurs = malloc(A.N * sizeof(unsigned int));
-			int index_succ = 0;
-			struct transition *trans_lettre_courante = A.T;
-			// Tant qu'il reste des transitions
-			while (trans_lettre_courante) {
-				// Si on trouve une transition avec etat_courant et lettre_courante
-				if (trans_lettre_courante->p == q1 && trans_lettre_courante->a == curr_letter) {
-					printf("		Transition (%d,%c,%d) matchée\n", trans_lettre_courante->p, affcar(trans_lettre_courante->a), trans_lettre_courante->q);
-					successeurs[index_succ] = trans_lettre_courante->q;
-					index_succ++;
-				}
-				trans_lettre_courante = trans_lettre_courante->suiv;
-			}
-			// On va regarder si notre tableau d'états successeurs n'est pas vide
-			if (index_succ != 0) {
-				// Affichage de l'ensemble d'états successeurs //! A SUPPRIMER DANS LA VERSION QUE L'ON REND
-				printf("		Etat successeur: ");
-				for (int k = 0; k < index_succ; k++) {
-					printf("%d ", successeurs[k]);
-				}
-				printf("\n");
-				// On va regarder si l'ensemble d'états successeurs est déjà présent dans liste->etat
-				int est_present = 0; // Booléen pour savoir si l'ensemble d'états successeurs est déjà présent dans liste->etat
-				struct listeChainee *curr = liste;
-				while (curr != NULL) {
-					// On va regarder si l'ensemble d'états successeurs est déjà présent dans liste->etat
-					int cpt = 0; // Compteur pour savoir si l'ensemble d'états successeurs est déjà présent dans liste->etat
-					for (int k = 0; k < index_succ; k++) {
-						for (int l = 0; l < curr->etat[k]; l++) {
-							if (successeurs[k] == curr->etat[l]) {
-								cpt++;
-							}
-						}
-					}
-					// Si l'ensemble d'états successeurs est déjà présent dans liste->etat
-					if (cpt == index_succ) {
-						est_present = 1;
-						break;
-					}
-					curr = curr->suiv;
-				}
-				// Si l'ensemble d'états successeurs n'est pas présent dans liste->etat
-				if (!est_present) { //! problème surement ici
-					printf("		Tableau d'états successeurs NON présent dans liste->etat\n");
-					// On ajoute l'ensemble d'états successeurs à liste->etat
-					struct listeChainee *newlisteChainee = malloc(index_succ * sizeof(struct listeChainee));
-					memcpy(newlisteChainee->etat, successeurs, index_succ * sizeof(unsigned int));
-					newlisteChainee->clé = index_cle;
-					newlisteChainee->suiv = NULL;
-					liste->suiv = newlisteChainee;
-					index_etat++; // On incrémente l'index pour le tableau d'états
-					index_cle++; // On incrémente l'index pour la clé
-					printf("		Tableau d'états successeurs ajouté à liste->etat\n");
-				}
-				// On ajoute la transition (liste->clé, curr_letter, liste->suiv->clé) à A_determinise
-				printf("		Ajout de la transition (%d,%c,%d) à A_determinise\n", liste->clé, curr_letter, liste->suiv->clé);
-				printf("			Avec liste->clé: %d\n", liste->clé);
-				printf("			Avec curr_letter: %c\n", curr_letter);
-				printf("			Avec liste->suiv->clé: %d\n", liste->suiv->clé);
-				//Affichage du tableau d'états successeurs pour la clé liste->suiv->clé //! A SUPPRIMER DANS LA VERSION QUE L'ON REND
-				printf("				Etat successeur: ");
-				for (int k = 0; k < index_succ; k++) {
-					printf("%d ", successeurs[k]);
-				}
-				printf("\n");
-				A_determinise.N = index_cle;
-				A_determinise = ajoute_une_transition(A_determinise, liste->clé, curr_letter, liste->suiv->clé);
-				// Il faut regarder si l'ensemble d'états successeurs contient un état final
-				int est_final = 0; // Booléen pour savoir si l'ensemble d'états successeurs contient un état final
-				for (int k = 0; k < index_succ; k++) {
-					if (A.F[successeurs[k]]) {
-						est_final = 1;
-						break;
-					}
-				}
-				// Si l'ensemble d'états successeurs contient un état final
-				if (est_final) {
-					// On ajoute liste->suiv->clé à A_determinise.F
-					etat_final_ON(A_determinise, liste->suiv->clé);
-					printf("		Etat final %d ajouté à A_determinise\n", liste->suiv->clé);
-				}
-				printf("		Transition ajoutée à A_determinise\n");
 
+		// On récupère les informations de l'ensemble d'états courant
+		unsigned int *curr_ens = ens_etat->etat;
+		int curr_ens_size = ens_etat->size;
+		int curr_clé = ens_etat->clé;
+
+		// Pour chaque lettre de l'alphabet
+		for (int i = 0; i < alphabet_size; i++) {
+			char curr_letter = alphabet[i]; // Lettre courante
+			printf("	Lettre courante: %c\n", curr_letter);
+
+			// On va créer le tableau des successeurs trié de l'ensemble d'états courant avec la lettre courante en sauvegardant sa taille
+			int taille_successeurs;
+			unsigned int *successeurs = tableauArrivee(A, curr_ens, curr_ens_size, curr_letter, &taille_successeurs);
+
+			// Affichage des informations du tableau successeurs //! A SUPPRIMER DANS LA VERSION FINALE
+			printf("		Taille ensemble successeurs: %d\n", taille_successeurs);
+			printf("		Ensemble successeurs: {");
+			for (int k = 0; k < taille_successeurs; k++) {
+				if (k == taille_successeurs - 1) printf("%d}", successeurs[k]);
+				else printf("%d, ", successeurs[k]);
 			}
-			// On libère la mémoire du tableau d'états successeurs
+			printf("\n");
+
+			// On va regarder si notre tableau d'états successeurs n'est pas vide
+			if (taille_successeurs != 0) {
+
+				// On va recherche la bonne clé pour l'ensemble d'états successeurs
+				int clé_succ = recherche_cle(ARCHIVES, successeurs, taille_successeurs);
+				printf("		Obtention de la clé de l'ensemble successeurs: %d\n", clé_succ);
+
+				// Nous insérons l'ensemble d'états successeurs si ce n'est pas déjà fait
+				if (clé_succ == index_cle) {
+
+					// On ajoute l'ensemble d'états successeurs à liste->etat
+					ajouter_etat(ens_etat, successeurs, taille_successeurs);
+
+					// On ajoute l'ensemble d'états successeurs à ARCHIVES
+					ajouter_etat(ARCHIVES, successeurs, taille_successeurs);
+
+					// On incrémente l'index pour la clé
+					index_cle++;
+					printf("	Incrémentation -> index clé: %d\n", index_cle);
+				}
+
+				// On met à jour le nombre d'états de A_determinise
+				if (A_determinise.N < clé_succ) A_determinise.N = clé_succ + 5;
+
+				printf("		Nombre d'états: %d\n", A_determinise.N);
+				printf("		Ajout de la transition (%d,%c,%d)\n", curr_clé, curr_letter, clé_succ);
+
+				// On ajoute la transition (liste->clé, curr_letter, cle) à A_determinise
+				A_determinise = ajoute_une_transition(A_determinise, curr_clé, curr_letter, clé_succ); 
+				printf("	Transition ajoutée\n");
+
+				// Vérification si l'ensemble d'états successeurs contient un état final
+				for (int k = 0; k < taille_successeurs; k++) {
+					if (A.F[successeurs[k]]) {
+						etat_final_ON(A_determinise, clé_succ);
+						break;
+					}
+				}
+
+				// Affichage des listes //! A SUPPRIMER DANS LA VERSION FINALE
+				printf("\n");
+				printf("	-> ens_etat:\n");
+				printList(ens_etat);
+				printf("\n");
+				printf("	-> ARCHIVES:\n");
+				printList(ARCHIVES);
+				printf("\n");
+			}
+
+			// On libère la mémoire
 			free(successeurs);
 		}
-		// On passe à l'ensemble d'états suivant
-		liste = liste->suiv;
 
-		// Affichage de la liste //! A SUPPRIMER DANS LA VERSION QUE L'ON REND
-		printf("Liste:\n");
-		printList(liste);
-		printf("\n");
-	}
+		// On passe à l'ensemble d'états suivant
+		ens_etat = ens_etat->suiv;
+	} 
+	
 	// On libère la mémoire de la liste chaînée / du tableau d'états / du tableau d'états filtré
-	liberer_chaine(liste); free(tab); free(tab_filtre);
+	liberer_chaine(ens_etat); free(tab); free(alphabet);
 
 	// Nous devons rendre l'automate déterministe complet
+	printf("NOWAY C LA FIN\n");
 	A_determinise = AFD_complet(A_determinise);
-	char *temp = A.nom; // On sauvegarde le nom de l'automate
-	A = A_determinise;
-	A.nom = temp;
-	return A;
+	printf("NOWAY C LA FIN\n");
+	return A_determinise;
 }
 
 //###
