@@ -798,7 +798,7 @@ AUTOMATE determinise (AUTOMATE A) {
 				}
 
 				// On met à jour le nombre d'états de A_determinise
-				if (A_determinise.N < clé_succ) A_determinise.N = clé_succ + 5;
+				if (A_determinise.N < clé_succ) A_determinise.N = clé_succ + 1;
 
 				printf("		Nombre d'états: %d\n", A_determinise.N);
 				printf("		Ajout de la transition (%d,%c,%d)\n", curr_clé, curr_letter, clé_succ);
