@@ -108,7 +108,7 @@ void afficher(AUTOMATE A) {
 			t = t->suiv;
 			if ((i%5 == 0) && t) printf("\n                  ");
 			i++;
-		}
+	}
 	printf("\n\n");
 }
 
@@ -324,21 +324,27 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 
 // Renvoie vrai si la lettre est déjà présente dans le tableau
 int dejaPresent(char lettre, char *tab, int taille) {
+	// Parcours du tableau
 	for (int i = 0; i < taille; i++) {
+		// Si on trouve la lettre dans le tableau, on renvoie vrai
 		if (tab[i] == lettre) {
 			return 1;
 		}
 	}
+	// Sinon on renvoie faux
 	return 0;
 }
 
 // Renvoie vrai si l'état est déjà présente dans le tableau
 int dejaPresent_etat(unsigned int etat, unsigned int *tab, int taille) {
+	// Parcours du tableau
 	for (int i = 0; i < taille; i++) {
+		// Si on trouve l'état dans le tableau, on renvoie vrai
 		if (tab[i] == etat) {
 			return 1;
 		}
 	}
+	// Sinon on renvoie faux
 	return 0;
 }
 
@@ -437,67 +443,6 @@ int check_deterministe(AUTOMATE A) {
 	return 1;
 }
 
-// Fonction qui sera appelée si l'automate est déjà déterministe pour le rendre complet
-AUTOMATE AFD_complet(AUTOMATE A) {
-
-	int newA_size = A.N + 1;
-	AUTOMATE newA = creer_automate("newA", newA_size);
-	int index = 0;
-	char *tab = malloc(A.nb_trans * sizeof(char));
-
-	newA = A;
-	// On va parcourir les transitions de newA
-	struct transition *auto_newA = newA.T;
-	while (auto_newA) {
-		// On ajoute la lettre de la transition dans le tableau
-		tab[index] = auto_newA->a;
-		index++;
-		// On passe à la transition suivante
-		auto_newA = auto_newA->suiv;
-	}
-
-	int tab_filtre_size;;
-	// On va filtrer le tableau pour garder que les lettres uniques
-	char *tab_filtre = filtrage_alphabet(tab, index, &tab_filtre_size);
-	
-	// On va ajouter un état poubelle à newA
-	newA.N++;
-	//printf("Nombre états: %d\n", newA.N);
-	//printf("Nombre transitions: %d\n", newA.nb_trans);
-	unsigned int poubelle = newA.N - 1;
-	//printf("Ajout de l'état poubelle: %d\n", poubelle);
-	// Pour chaque état de A
-	for (unsigned int q1 = 0; q1 < newA.N; q1++) {
-		// Pour chaque lettre de l'alphabet newtab
-		for (int i = 0; i < tab_filtre_size; i++) {
-			// On va regarder si l'état q1 possède une transition avec la lettre courante
-			char curr_letter = tab_filtre[i]; // Lettre courante
-			int possede_lettre = 0; // Booléen pour savoir si l'état possède la lettre courante
-			struct transition *trans = A.T;
-			while (trans) {
-				// Si on trouve une transition avec l'état courant et la lettre courante
-				if (trans->p == q1 && trans->a == curr_letter) {
-					possede_lettre = 1; // On actualise le booléen
-					break;
-				}
-				// On passe à la transition suivante
-				trans = trans->suiv;
-			}
-			// Si l'état ne possède pas la lettre courante
-			if (!possede_lettre) {
-				// On ajoute une transition depuis l'état courant vers l'état poubelle avec la lettre courante
-				newA = ajoute_une_transition(newA, q1, curr_letter, poubelle);
-			}
-		}
-	}
-	
-	// On libère la mémoire
-	free(tab);
-	free(tab_filtre);
-
-	return newA;
-}
-
 // Structure pour une liste chaînée d'états
 struct listeChainee {
 	int clé;
@@ -556,7 +501,7 @@ void printList(struct listeChainee *head) {
     while (head != NULL) {
 		printf("clé: %d, ", head->clé);
 		printf("size : %d, ", head->size);
-		printf("etat: {");
+		printf("ensemble: {");
         for (int i = 0; i < head->size; i++) {
 			if (i == head->size - 1) printf("%d", head->etat[i]);
 			else printf("%d, ", head->etat[i]);
@@ -586,15 +531,19 @@ unsigned int *tableauArrivee(AUTOMATE A, unsigned int *tab_depart, int taille_ta
 	unsigned int *tab_arrivee = malloc(A.N * sizeof(unsigned int));
 	int index = 0;
 
-	// Pour chaque état de tab_depart
-	for (unsigned int q = 0; q < taille_tab_depart; q++) {
+	// On va parcourir la longueur du tableau d'états de départ
+	for (unsigned int i = 0; i < taille_tab_depart; i++) {
+		
+		// On prend l'état à l'indice i du tableau
+		unsigned curr_etat = tab_depart[i];
+
 		// On va parcourir les transitions de A
 		struct transition *trans_A = A.T;
 
 		// Tant qu'il nous reste des transitions
 		while (trans_A) {
 			// Si on trouve une transition avec l'état courant et la lettre courante
-			if (trans_A->p == q && trans_A->a == lettre) {
+			if (trans_A->p == curr_etat && trans_A->a == lettre) {
 				tab_arrivee[index] = trans_A->q;
 				index++;
 			}
@@ -690,12 +639,6 @@ int recherche_cle(struct listeChainee *liste, unsigned int *ens, int taille_ens)
 
 AUTOMATE determinise (AUTOMATE A) {
 
-	// On vérifie si l'automate n'est pas déjà déterministe
-	if (check_deterministe(A)) {
-		A = AFD_complet(A);
-		return A;
-	}
-
 	// On va récupérer l'alphabet de l'automate
 	int index = 0;
 	char *tab = malloc(A.nb_trans * sizeof(char));
@@ -713,27 +656,21 @@ AUTOMATE determinise (AUTOMATE A) {
 	int alphabet_size;
 	char *alphabet = filtrage_alphabet(tab, index, &alphabet_size);
 
-	// Affichage de l'alphabet de l'automate //! A SUPPRIMER DANS LA VERSION FINALE
-	printf("Alphabet: ");
-	for (int i = 0; i < alphabet_size; i++) {
-		printf("%c ", alphabet[i]);
-	}
-	printf("\n");
-
 	// On initialise un index pour la clé
 	int index_cle = 0;
 
 	// On va mettre l'état initial (0) dans liste->etat
-	struct listeChainee *ens_etat = malloc(sizeof(struct listeChainee));
-	unsigned int ens_temp[] = {0}; // On va mettre l'état initial (0) dans liste->etat
-	ens_etat->etat = ens_temp;
-	ens_etat->clé = index_cle;
-	ens_etat->suiv = NULL;
-	ens_etat->size = 1;
+	struct listeChainee *a_traiter = malloc(sizeof(struct listeChainee));
+	a_traiter->etat = malloc(sizeof(unsigned int));
+	a_traiter->etat[0] = 0;
+	a_traiter->clé = index_cle;
+	a_traiter->suiv = NULL;
+	a_traiter->size = 1;
 
 	// La liste chaînée ARCHIVES va contenir tous les ensembles d'états afin de l'utiliser pour des tests avant d'ajouter un nouvel ensemble d'états
 	struct listeChainee *ARCHIVES = malloc(sizeof(struct listeChainee));
-	ARCHIVES->etat = ens_temp;
+	ARCHIVES->etat = malloc(sizeof(unsigned int));
+	ARCHIVES->etat[0] = 0;
 	ARCHIVES->clé = index_cle;
 	ARCHIVES->suiv = NULL;
 	ARCHIVES->size = 1;
@@ -742,87 +679,93 @@ AUTOMATE determinise (AUTOMATE A) {
 	index_cle++;
 
 	// On va construire un nouvel automate qui sera déterministe
-	AUTOMATE A_determinise = creer_automate(A.nom, 0);
+	AUTOMATE A_determinise = creer_automate(A.nom, 1);
 
 	// Tant qu'il nous reste des ensembles d'états à traiter
-	while (ens_etat) {
-		// Affichage de l'ensemble d'états courant //! A SUPPRIMER DANS LA VERSION FINALE
-		printf("Ensemble courant: {");
-		for (int k = 0; k < ens_etat->size; k++) {
-			if (k == ens_etat->size - 1) printf("%d}", ens_etat->etat[k]);
-			else printf("%d, ", ens_etat->etat[k]);
-		}
-		printf("\n");
+	while (a_traiter) {
+		// // Affichage de l'ensemble d'états courant //! A SUPPRIMER DANS LA VERSION FINALE
+		// printf("Ensemble courant: {");
+		// for (int k = 0; k < a_traiter->size; k++) {
+		// 	if (k == a_traiter->size - 1) printf("%d}", a_traiter->etat[k]);
+		// 	else printf("%d, ", a_traiter->etat[k]);
+		// }
+		// printf("\n");
 
 		// On récupère les informations de l'ensemble d'états courant
-		unsigned int *curr_ens = ens_etat->etat;
-		int curr_ens_size = ens_etat->size;
-		int curr_clé = ens_etat->clé;
+		unsigned int *curr_ens = a_traiter->etat;
+		int curr_ens_size = a_traiter->size;
+		int curr_clé = a_traiter->clé;
 
 		// Pour chaque lettre de l'alphabet
 		for (int i = 0; i < alphabet_size; i++) {
+
 			char curr_letter = alphabet[i]; // Lettre courante
-			printf("	Lettre courante: %c\n", curr_letter);
+			//printf("	Lettre courante: %c\n", curr_letter);
 
 			// On va créer le tableau des successeurs trié de l'ensemble d'états courant avec la lettre courante en sauvegardant sa taille
 			int taille_successeurs;
 			unsigned int *successeurs = tableauArrivee(A, curr_ens, curr_ens_size, curr_letter, &taille_successeurs);
 
 			// Affichage des informations du tableau successeurs //! A SUPPRIMER DANS LA VERSION FINALE
-			printf("		Taille ensemble successeurs: %d\n", taille_successeurs);
-			printf("		Ensemble successeurs: {");
+			//printf("		Taille ensemble successeurs: %d\n", taille_successeurs);
+			//printf("		Ensemble successeurs: {");
+			if (taille_successeurs == 0) printf("}");
 			for (int k = 0; k < taille_successeurs; k++) {
 				if (k == taille_successeurs - 1) printf("%d}", successeurs[k]);
 				else printf("%d, ", successeurs[k]);
 			}
-			printf("\n");
+			//printf("\n");
 
 			// On va regarder si notre tableau d'états successeurs n'est pas vide
 			if (taille_successeurs != 0) {
 
 				// On va recherche la bonne clé pour l'ensemble d'états successeurs
+
 				int clé_succ = recherche_cle(ARCHIVES, successeurs, taille_successeurs);
-				printf("		Obtention de la clé de l'ensemble successeurs: %d\n", clé_succ);
+				//printf("		Obtention de la clé de l'ensemble successeurs: %d\n", clé_succ);
 
 				// Nous insérons l'ensemble d'états successeurs si ce n'est pas déjà fait
 				if (clé_succ == index_cle) {
 
-					// On ajoute l'ensemble d'états successeurs à ens_etat->etat
-					ajouter_etat(ens_etat, successeurs, taille_successeurs);
+					// On ajoute l'ensemble d'états successeurs à a_traiter->etat
+					ajouter_etat(a_traiter, successeurs, taille_successeurs);
 
 					// On ajoute l'ensemble d'états successeurs à ARCHIVES
 					ajouter_etat(ARCHIVES, successeurs, taille_successeurs);
 
 					// On incrémente l'index pour la clé
 					index_cle++;
-					printf("	Incrémentation -> index clé: %d\n", index_cle);
+					//printf("	Incrémentation -> index clé: %d\n", index_cle);
 				}
 
-				// On met à jour le nombre d'états de A_determinise
-				if (A_determinise.N <= clé_succ) A_determinise.N = clé_succ + 1;
+				// // Affichage des listes //! A SUPPRIMER DANS LA VERSION FINALE
+				// printf("\n");
+				// printf("	-> a_traiter:\n");
+				// printList(a_traiter);
+				// printf("\n");
+				// printf("	-> ARCHIVES:\n");
+				// printList(ARCHIVES);
+				// printf("\n");
 
-				printf("		Nombre d'états: %d\n", A_determinise.N);
-				
-				// On ajoute la transition (ens_etat->clé, curr_letter, cle) à A_determinise
+				// On met à jour le nombre d'états de A_determinise
+				A_determinise.N = index_cle;
+
+				//printf("		Nombre d'états: %d\n", A_determinise.N);
+				// On ajoute la transition (a_traiter->clé, curr_letter, cle) à A_determinise
 				A_determinise = ajoute_une_transition(A_determinise, curr_clé, curr_letter, clé_succ); 
-				printf("		INSERTION Transition (%d,%c,%d)\n", curr_clé, curr_letter, clé_succ);
+				//printf("		INSERTION Transition (%d,%c,%d)\n", curr_clé, curr_letter, clé_succ);
 
 				// Vérification si l'ensemble d'états successeurs contient un état final
 				for (int k = 0; k < taille_successeurs; k++) {
 					if (A.F[successeurs[k]]) {
+						//printf("		ETAT FINAL DANS SUCCESSEURS: %d\n", successeurs[k]);
 						etat_final_ON(A_determinise, clé_succ);
+						//printf("		%d SERA FINAL\n", clé_succ);
 						break;
+					} else {
+						etat_final_OFF(A_determinise, clé_succ);
 					}
 				}
-
-				// Affichage des listes //! A SUPPRIMER DANS LA VERSION FINALE
-				printf("\n");
-				printf("	-> ens_etat:\n");
-				printList(ens_etat);
-				printf("\n");
-				printf("	-> ARCHIVES:\n");
-				printList(ARCHIVES);
-				printf("\n");
 			}
 
 			// On libère la mémoire
@@ -830,16 +773,58 @@ AUTOMATE determinise (AUTOMATE A) {
 		}
 
 		// On passe à l'ensemble d'états suivant
-		ens_etat = ens_etat->suiv;
+		a_traiter = a_traiter->suiv;
 	} 
-	
-	// On libère la mémoire de la liste chaînée / du tableau d'états / du tableau d'états filtré
-	liberer_chaine(ens_etat); free(tab); free(alphabet);
 
-	// Nous devons rendre l'automate déterministe complet
-	printf("NOWAY C LA FIN\n");
-	A_determinise = AFD_complet(A_determinise);
-	printf("NOWAY C LA FIN\n");
+	// Transformation de l'automate déterminisé en AFD complet
+	A_determinise.N++;
+	unsigned int poubelle = A_determinise.N - 1;
+	A_determinise.F[poubelle] = 0; // L'état poubelle n'est pas final
+
+	// On doit trouver les transitions manquantes qui seront des transitions vers la poubelle
+
+	// Pour chaque état de A_determinise
+	for (unsigned int q_depart = 0; q_depart < A_determinise.N; q_depart++) {
+
+		//printf("Etat courant: %d\n", q_depart);
+
+		// Pour chaque lettre de l'alphabet
+		for (int i = 0; i < alphabet_size; i++) {
+
+			char curr_letter = alphabet[i];
+			//printf("	Lettre courante: %c\n", curr_letter);
+
+			// On va voir si la transition avec comme état de départ q et comme lettre alphabet_filtre[i] existe
+			int manquante = 1;
+
+			struct transition *check = A_determinise.T;
+			while (check) {
+
+				// Si on trouve une transition avec l'état courant et la lettre courante
+				if (check->p == q_depart && check->a == curr_letter) {
+					//printf("	Transition trouvée: (%d,%c,%d)\n", check->p, affcar(check->a), check->q);
+					manquante = 0;
+					break;
+				}
+				check = check->suiv;
+			}
+
+			// On vérifie maintenant si la transition existe
+			if (manquante) {
+				// On ajoute la transition (q, curr_letter, poubelle)
+				//printf("Transition manquante: (%d,%c)\n", q_depart, curr_letter);
+				A_determinise = ajoute_une_transition(A_determinise, q_depart, curr_letter, poubelle);
+				//printf("Transition ajoutée: (%d,%c,%d)\n", q_depart, curr_letter, poubelle);
+			}
+		}
+	}
+	
+	// On libère la mémoire de la liste chaînée / du tableau d'états filtré
+	// liberer_chaine(a_traiter);
+	// liberer_chaine(ARCHIVES);
+	// free(tab); 
+	// free(alphabet);
+
 	return A_determinise;
 }
 
