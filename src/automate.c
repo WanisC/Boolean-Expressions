@@ -502,8 +502,8 @@ AUTOMATE AFD_complet(AUTOMATE A) {
 struct listeChainee {
 	int clé;
 	int size;
-    struct listeChainee *suiv;
 	unsigned int *etat;
+    struct listeChainee *suiv;
 };
 
 // Fonction pour trier un tableau d'entiers
@@ -652,6 +652,7 @@ void fusionnerTableaux(unsigned int *resultat, int *tailleResultat, unsigned int
     }
 }
 
+// Fonction recherchant la clé d'un ensemble d'états dans une liste chaînée (si l'ensemble d'états n'est pas présent, on renvoie la clé précédente + 1)
 int recherche_cle(struct listeChainee *liste, unsigned int *ens, int taille_ens) {
 	struct listeChainee *curr = liste;
 	int sauv; // Une sauvegarde au cas où ens n'est pas présent dans la liste
@@ -786,7 +787,7 @@ AUTOMATE determinise (AUTOMATE A) {
 				// Nous insérons l'ensemble d'états successeurs si ce n'est pas déjà fait
 				if (clé_succ == index_cle) {
 
-					// On ajoute l'ensemble d'états successeurs à liste->etat
+					// On ajoute l'ensemble d'états successeurs à ens_etat->etat
 					ajouter_etat(ens_etat, successeurs, taille_successeurs);
 
 					// On ajoute l'ensemble d'états successeurs à ARCHIVES
@@ -798,14 +799,13 @@ AUTOMATE determinise (AUTOMATE A) {
 				}
 
 				// On met à jour le nombre d'états de A_determinise
-				if (A_determinise.N < clé_succ) A_determinise.N = clé_succ + 1;
+				if (A_determinise.N <= clé_succ) A_determinise.N = clé_succ + 1;
 
 				printf("		Nombre d'états: %d\n", A_determinise.N);
-				printf("		Ajout de la transition (%d,%c,%d)\n", curr_clé, curr_letter, clé_succ);
-
-				// On ajoute la transition (liste->clé, curr_letter, cle) à A_determinise
+				
+				// On ajoute la transition (ens_etat->clé, curr_letter, cle) à A_determinise
 				A_determinise = ajoute_une_transition(A_determinise, curr_clé, curr_letter, clé_succ); 
-				printf("	Transition ajoutée\n");
+				printf("		INSERTION Transition (%d,%c,%d)\n", curr_clé, curr_letter, clé_succ);
 
 				// Vérification si l'ensemble d'états successeurs contient un état final
 				for (int k = 0; k < taille_successeurs; k++) {
