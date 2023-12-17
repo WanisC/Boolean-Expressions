@@ -6,6 +6,7 @@
 %}
 
 %%
+^.[a-z]+.$     { printf("%s", yytext); yylval.str = strdup(yytext); return MOT; }
 [a-z]   { printf("%s", yytext); yylval.str = strdup(yytext); return LETTRE; }
 "+"     { printf("+");              return UNION;   }
 "."     { printf(".");              return CONCAT;  }
@@ -14,9 +15,8 @@
 ")"     { printf(")");              return PAR_F;   }
 "E"     { printf("E");              return EPSILON; }
 "0"     { printf("0");              return VIDE;    }
-\n      { printf("\n"); return 0;  } /* on aura besoin du saut de lignes pour notre fichier test1 */
+\n { return NEWLINE;}
 [ \.\t] {}
-
 %% 
 
 
