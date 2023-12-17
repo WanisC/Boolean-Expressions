@@ -335,19 +335,6 @@ int dejaPresent(char lettre, char *tab, int taille) {
 	return 0;
 }
 
-// Renvoie vrai si l'état est déjà présente dans le tableau
-int dejaPresent_etat(unsigned int etat, unsigned int *tab, int taille) {
-	// Parcours du tableau
-	for (int i = 0; i < taille; i++) {
-		// Si on trouve l'état dans le tableau, on renvoie vrai
-		if (tab[i] == etat) {
-			return 1;
-		}
-	}
-	// Sinon on renvoie faux
-	return 0;
-}
-
 // Filtre le tableau pour garder que les lettres uniques
 char* filtrage_alphabet(char *tab, int taille, int *nb_element) {
 	char *filtreTab = malloc(taille * sizeof(char));
@@ -368,79 +355,6 @@ char* filtrage_alphabet(char *tab, int taille, int *nb_element) {
     *nb_element = index;
 
 	return filtreTab;
-}
-
-// Filtre le tableau pour garder que les états uniques
-unsigned int* filtrage_etats(unsigned int *tab, int taille, int *nb_element) {
-	unsigned int *filtreTab = malloc(taille * sizeof(char));
-
-	int index = 0;
-
-	for (int i = 0; i < taille; i++) {
-		if (!dejaPresent_etat(tab[i], filtreTab, index)) {
-			filtreTab[index] = tab[i];
-			index++;
-		}
-	}
-
-	// On redimensionne le tableau
-	filtreTab = realloc(filtreTab, index * sizeof(char));
-
-	// On met à jour le nombre d'éléments dans le tableau
-    *nb_element = index;
-
-	return filtreTab;
-}
-
-// Renvoie vrai si l'automate A est déterministe
-int check_deterministe(AUTOMATE A) {
-
-	// On récupère l'alphabet de l'automate
-	int newA_size = A.N + 1;
-	AUTOMATE newA = creer_automate("newA", newA_size);
-	int index = 0;
-	char *tab = malloc(A.nb_trans * sizeof(char));
-
-	newA = A;
-	// On va parcourir les transitions de newA
-	struct transition *auto_newA = newA.T;
-
-	// Tant qu'il nous reste des transitions
-	while (auto_newA) {
-		// On ajoute la lettre de la transition dans le tableau
-		tab[index] = auto_newA->a;
-		index++;
-		// On passe à la transition suivante
-		auto_newA = auto_newA->suiv;
-	}
-
-	// On va filtrer le tableau pour garder que les lettres uniques
-	int tab_filtre_size;
-	char *tab_filtre = filtrage_alphabet(tab, index, &tab_filtre_size);
-
-	// On va parcourir tous les états de A
-	for (unsigned int q1 = 0; q1 < A.N; q1++) {
-		// On va voir si pour chaque lettre, l'état courant à au plus une transition avec cette lettre et voir qu'il n'y a pas de transition epsilon
-		for (int i = 0; i < tab_filtre_size; i++) {
-			char curr_letter = tab_filtre[i]; // Lettre courante
-			int cpt = 0; // Compteur pour le nombre de transitions avec la lettre courante
-			struct transition *trans_lettre = A.T;
-			while (trans_lettre) {
-				// Si on trouve une transition avec l'état courant et la lettre courante, on incrémente le compteur
-				if (trans_lettre->p == q1 && trans_lettre->a == curr_letter) {
-					cpt++;
-				}
-				trans_lettre = trans_lettre->suiv;
-			}
-			// Si on a plus d'une transition avec la lettre courante, l'automate n'est pas déterministe
-			if (cpt > 1) {
-				return 0;
-			}
-		}
-	}
-	free(tab);
-	free(tab_filtre);
-	return 1;
 }
 
 // Structure pour une liste chaînée d'états
@@ -514,90 +428,12 @@ void printList(struct listeChainee *head) {
 
 // Libère la mémoire d'une liste chaînée d'ensemble d'états
 void liberer_chaine(struct listeChainee *chaine) {
-	struct listeChainee *curr = chaine;
-    struct listeChainee *next;
+	struct listeChainee *tmp;
 
-    while (curr != NULL) {
-        next = curr->suiv;
-        free(curr);
-        curr = next;
-    }
-}
-
-
-
-// Fonction qui renvoie un tableau contenant les états successeurs de l'ensemble d'états avec la lettre courante
-unsigned int *tableauArrivee(AUTOMATE A, unsigned int *tab_depart, int taille_tab_depart, char lettre, int *taille_tab_arrivee) {
-	unsigned int *tab_arrivee = malloc(A.N * sizeof(unsigned int));
-	int index = 0;
-
-	// On va parcourir la longueur du tableau d'états de départ
-	for (unsigned int i = 0; i < taille_tab_depart; i++) {
-		
-		// On prend l'état à l'indice i du tableau
-		unsigned curr_etat = tab_depart[i];
-
-		// On va parcourir les transitions de A
-		struct transition *trans_A = A.T;
-
-		// Tant qu'il nous reste des transitions
-		while (trans_A) {
-			// Si on trouve une transition avec l'état courant et la lettre courante
-			if (trans_A->p == curr_etat && trans_A->a == lettre) {
-				tab_arrivee[index] = trans_A->q;
-				index++;
-			}
-			trans_A = trans_A->suiv;
-		}
-	}
-
-	// On redimensionne le tableau
-	tab_arrivee = realloc(tab_arrivee, index * sizeof(unsigned int));
-
-	// On met à jour le nombre d'éléments dans le tableau
-	*taille_tab_arrivee = index;
-
-	// On retourne le tableau
-	return tab_arrivee;
-}
-
-// Fonction pour fusionner plusieurs tableaux et éliminer les doublons
-void fusionnerTableaux(unsigned int *resultat, int *tailleResultat, unsigned int *tableaux[], int *tailles, int nombreDeTableaux) {
-
-	// On regarde si notre tableau est de taille 1
-	if (nombreDeTableaux == 1) {
-		// On retourne simplement le tableau présent dans tableaux
-		resultat = tableaux[0];
-		*tailleResultat = tailles[0];
-		return;
-	}
-
-    // On initiliase la taille du tableau résultat
-    *tailleResultat = 0;
-
-    // On fusionne les tableaux dans le tableau résultat en éliminant les doublons
-    for (int k = 0; k < nombreDeTableaux; k++) {
-        unsigned int *tableauCourant = tableaux[k];
-        int tailleCourante = tailles[k];
-
-        for (int i = 0; i < tailleCourante; i++) {
-			unsigned int elementCourant = tableauCourant[i];
-            int doublon = 0;
-
-            // Vérification si l'élément courant existe déjà dans le tableau résultat
-            for (int j = 0; j < *tailleResultat; j++) {
-                if (resultat[j] == elementCourant) {
-                    doublon = 1;
-                    break;
-                }
-            }
-
-            // Ajout de l'élément au tableau résultat s'il n'est pas un doublon
-            if (!doublon) {
-                resultat[*tailleResultat] = elementCourant;
-                (*tailleResultat)++;
-            }
-        }
+    while (chaine != NULL) {
+        tmp = chaine;
+        chaine = chaine->suiv;
+        free(tmp);
     }
 }
 
@@ -683,13 +519,6 @@ AUTOMATE determinise (AUTOMATE A) {
 
 	// Tant qu'il nous reste des ensembles d'états à traiter
 	while (a_traiter) {
-		// // Affichage de l'ensemble d'états courant //! A SUPPRIMER DANS LA VERSION FINALE
-		// printf("Ensemble courant: {");
-		// for (int k = 0; k < a_traiter->size; k++) {
-		// 	if (k == a_traiter->size - 1) printf("%d}", a_traiter->etat[k]);
-		// 	else printf("%d, ", a_traiter->etat[k]);
-		// }
-		// printf("\n");
 
 		// On récupère les informations de l'ensemble d'états courant
 		unsigned int *curr_ens = a_traiter->etat;
@@ -704,17 +533,36 @@ AUTOMATE determinise (AUTOMATE A) {
 
 			// On va créer le tableau des successeurs trié de l'ensemble d'états courant avec la lettre courante en sauvegardant sa taille
 			int taille_successeurs;
-			unsigned int *successeurs = tableauArrivee(A, curr_ens, curr_ens_size, curr_letter, &taille_successeurs);
+			unsigned int *successeurs = malloc(A.N * sizeof(unsigned int));
+			int index = 0;
 
-			// Affichage des informations du tableau successeurs //! A SUPPRIMER DANS LA VERSION FINALE
-			//printf("		Taille ensemble successeurs: %d\n", taille_successeurs);
-			//printf("		Ensemble successeurs: {");
-			if (taille_successeurs == 0) printf("}");
-			for (int k = 0; k < taille_successeurs; k++) {
-				if (k == taille_successeurs - 1) printf("%d}", successeurs[k]);
-				else printf("%d, ", successeurs[k]);
+			// On va parcourir la longueur du tableau d'états de départ
+			for (unsigned int i = 0; i < curr_ens_size; i++) {
+				
+				// On prend l'état à l'indice i du tableau
+				unsigned curr_etat = curr_ens[i];
+
+				// On va parcourir les transitions de A
+				struct transition *trans_A = A.T;
+
+				// Tant qu'il nous reste des transitions
+				while (trans_A) {
+					// Si on trouve une transition avec l'état courant et la lettre courante
+					if (trans_A->p == curr_etat && trans_A->a == curr_letter) {
+						successeurs[index] = trans_A->q;
+						index++;
+					}
+					trans_A = trans_A->suiv;
+				}
 			}
-			//printf("\n");
+
+			// On redimensionne le tableau
+			successeurs = realloc(successeurs, index * sizeof(unsigned int));
+			// On met à jour le nombre d'éléments dans le tableau
+			taille_successeurs = index;
+			// On va trier dans l'ordre croissant le tableau
+			triBulles(successeurs, taille_successeurs);
+
 
 			// On va regarder si notre tableau d'états successeurs n'est pas vide
 			if (taille_successeurs != 0) {
@@ -735,17 +583,7 @@ AUTOMATE determinise (AUTOMATE A) {
 
 					// On incrémente l'index pour la clé
 					index_cle++;
-					//printf("	Incrémentation -> index clé: %d\n", index_cle);
 				}
-
-				// // Affichage des listes //! A SUPPRIMER DANS LA VERSION FINALE
-				// printf("\n");
-				// printf("	-> a_traiter:\n");
-				// printList(a_traiter);
-				// printf("\n");
-				// printf("	-> ARCHIVES:\n");
-				// printList(ARCHIVES);
-				// printf("\n");
 
 				// On met à jour le nombre d'états de A_determinise
 				A_determinise.N = index_cle;
@@ -766,6 +604,7 @@ AUTOMATE determinise (AUTOMATE A) {
 						etat_final_OFF(A_determinise, clé_succ);
 					}
 				}
+
 			}
 
 			// On libère la mémoire
@@ -774,7 +613,7 @@ AUTOMATE determinise (AUTOMATE A) {
 
 		// On passe à l'ensemble d'états suivant
 		a_traiter = a_traiter->suiv;
-	} 
+	}
 
 	// Transformation de l'automate déterminisé en AFD complet
 	A_determinise.N++;
@@ -816,14 +655,15 @@ AUTOMATE determinise (AUTOMATE A) {
 				A_determinise = ajoute_une_transition(A_determinise, q_depart, curr_letter, poubelle);
 				//printf("Transition ajoutée: (%d,%c,%d)\n", q_depart, curr_letter, poubelle);
 			}
+
 		}
 	}
+
 	
-	// On libère la mémoire de la liste chaînée / du tableau d'états filtré
-	// liberer_chaine(a_traiter);
-	// liberer_chaine(ARCHIVES);
-	// free(tab); 
-	// free(alphabet);
+	// On libère la mémoire de la liste chaînée / des tableaux d'alphabet
+	liberer_chaine(a_traiter);
+	free(tab); 
+	free(alphabet);
 
 	return A_determinise;
 }
