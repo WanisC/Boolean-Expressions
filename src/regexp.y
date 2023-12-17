@@ -22,20 +22,21 @@ char* str;
 %token <str>ETOILE
 %token <str>PAR_O PAR_F
 %type <str> expression 
+%type <str> sortie
 %%
 sortie : 
-        expression  {printf("%s \ncpt d'op = %s\n",$1,itc(cpt));}
+        expression  {printf("%s \ncpt d'op = %s\n",$1,itc(cpt)); return $1;}
         | 
     ;
 
 expression : 
-        expression CONCAT expression    {const char* listeChaines[] = {$1,$3,"exe",itc(cpt),"= concat_automate(exe",itc(cpt-1),",exe",itc(cpt-2),");\n"};   $$ = concatenerChaines(listeChaines,9);cpt ++;}
-    |   expression UNION expression     {const char* listeChaines[] = {$1,$3,"exe",itc(cpt),"= union_automate(exe",itc(cpt-1),",exe",itc(cpt-2),");\n"};    $$ = concatenerChaines(listeChaines,9);cpt ++;}
-    |   expression ETOILE               {const char* listeChaines[] = {$1,"exe",itc(cpt),"= etoile_automate(exe",itc(cpt-1),");\n"};                        $$ = concatenerChaines(listeChaines,6);cpt ++;}
+        expression CONCAT expression    {const char* listeChaines[] = {$1,$3,"A",itc(cpt),"= concat_automate(A",itc(cpt-2),",A",itc(cpt-1),");\n"};   $$ = concatenerChaines(listeChaines,9);cpt ++;}
+    |   expression UNION expression     {const char* listeChaines[] = {$1,$3,"A",itc(cpt),"= union_automate(A",itc(cpt-2),",A",itc(cpt-1),");\n"};    $$ = concatenerChaines(listeChaines,9);cpt ++;}
+    |   expression ETOILE               {const char* listeChaines[] = {$1,"A",itc(cpt),"= etoile_automate(A",itc(cpt-1),");\n"};                        $$ = concatenerChaines(listeChaines,6);cpt ++;}
     |   PAR_O expression PAR_F          {$$ =$2; }
-    |   LETTRE                          {const char* listeChaines[] = {"exe",itc(cpt),"= creer_automate_une_lettre(",$1,");\n"};                            $$ = concatenerChaines(listeChaines,5);cpt ++;}
-    |   EPSILON                         {const char* listeChaines[] = {"exe",itc(cpt),"= creer_automate_une_lettre(E);\n"};                                 $$ = concatenerChaines(listeChaines,3);cpt ++;}
-    |   VIDE                            {const char* listeChaines[] = {"exe",itc(cpt),"= creer_automate(0,1);\n"};                                          $$ = concatenerChaines(listeChaines,3);cpt ++;}
+    |   LETTRE                          {const char* listeChaines[] = {"A",itc(cpt),"= creer_automate_une_lettre(",$1,");\n"};                            $$ = concatenerChaines(listeChaines,5);cpt ++;}
+    |   EPSILON                         {const char* listeChaines[] = {"A",itc(cpt),"= creer_automate_une_lettre(E);\n"};                                 $$ = concatenerChaines(listeChaines,3);cpt ++;}
+    |   VIDE                            {const char* listeChaines[] = {"A",itc(cpt),"= creer_automate(0,1);\n"};                                          $$ = concatenerChaines(listeChaines,3);cpt ++;}
     ;
 %%
 
