@@ -104,6 +104,7 @@ void afficher(AUTOMATE A) {
 	struct transition *t = A.T;
 	i = 1;
 	while (t) {
+			//if (i > A.nb_trans) break;
 			printf(" (%d,%c,%d)",t->p,affcar(t->a),t->q);
 			t = t->suiv;
 			if ((i%5 == 0) && t) printf("\n                  ");
@@ -529,7 +530,6 @@ AUTOMATE determinise (AUTOMATE A) {
 		for (int i = 0; i < alphabet_size; i++) {
 
 			char curr_letter = alphabet[i]; // Lettre courante
-			//printf("	Lettre courante: %c\n", curr_letter);
 
 			// On va créer le tableau des successeurs trié de l'ensemble d'états courant avec la lettre courante en sauvegardant sa taille
 			int taille_successeurs;
@@ -547,6 +547,7 @@ AUTOMATE determinise (AUTOMATE A) {
 
 				// Tant qu'il nous reste des transitions
 				while (trans_A) {
+
 					// Si on trouve une transition avec l'état courant et la lettre courante
 					if (trans_A->p == curr_etat && trans_A->a == curr_letter) {
 						successeurs[index] = trans_A->q;
@@ -568,9 +569,7 @@ AUTOMATE determinise (AUTOMATE A) {
 			if (taille_successeurs != 0) {
 
 				// On va recherche la bonne clé pour l'ensemble d'états successeurs
-
 				int clé_succ = recherche_cle(ARCHIVES, successeurs, taille_successeurs);
-				//printf("		Obtention de la clé de l'ensemble successeurs: %d\n", clé_succ);
 
 				// Nous insérons l'ensemble d'états successeurs si ce n'est pas déjà fait
 				if (clé_succ == index_cle) {
@@ -588,23 +587,44 @@ AUTOMATE determinise (AUTOMATE A) {
 				// On met à jour le nombre d'états de A_determinise
 				A_determinise.N = index_cle;
 
+				// // Affichage de A_determinise //! A SUPPRIMER A LA FIN
+				// printf("### AVANT INSERTION ###\n");
+				// printf("Nombre d'états: %d\n", A_determinise.N);
+				// printf("Nombre de transitions: %d\n", A_determinise.nb_trans);
+				// printf("Transitions:\n");
+				// struct transition *transi1 = A_determinise.T;
+				// if (!transi1) printf("		Aucune transition\n");
+				// else while (transi1) {
+				// 		printf("	(%d,%c,%d)\n",transi1->p,affcar(transi1->a),transi1->q);
+				// 		transi1 = transi1->suiv;
+				// }
+				// printf("\n\n");
+
 				//printf("		Nombre d'états: %d\n", A_determinise.N);
-				// On ajoute la transition (a_traiter->clé, curr_letter, cle) à A_determinise
-				A_determinise = ajoute_une_transition(A_determinise, curr_clé, curr_letter, clé_succ); 
-				//printf("		INSERTION Transition (%d,%c,%d)\n", curr_clé, curr_letter, clé_succ);
+				// On ajoute la transition (curr_clé, curr_letter, clé_succ) à A_determinise
+				A_determinise = ajoute_une_transition(A_determinise, curr_clé, curr_letter, clé_succ);
+
+				// // Affichage de A_determinise //! A SUPPRIMER A LA FIN
+				// printf("### APRES INSERTION ###\n");
+				// printf("Nombre d'états: %d\n", A_determinise.N);
+				// printf("Nombre de transitions: %d\n", A_determinise.nb_trans);
+				// printf("Transitions:\n");
+				// struct transition *transi = A_determinise.T;
+				// while (transi) {
+				// 		printf("	(%d,%c,%d)\n",transi->p,affcar(transi->a),transi->q);
+				// 		transi = transi->suiv;
+				// }
+				// printf("\n\n");
 
 				// Vérification si l'ensemble d'états successeurs contient un état final
 				for (int k = 0; k < taille_successeurs; k++) {
-					if (A.F[successeurs[k]]) {
-						//printf("		ETAT FINAL DANS SUCCESSEURS: %d\n", successeurs[k]);
-						etat_final_ON(A_determinise, clé_succ);
-						//printf("		%d SERA FINAL\n", clé_succ);
-						break;
-					} else {
-						etat_final_OFF(A_determinise, clé_succ);
-					}
-				}
 
+					// Si on trouve un état final dans l'ensemble d'états successeurs
+					if (A.F[successeurs[k]]) {
+						etat_final_ON(A_determinise, clé_succ);
+						break;
+					} else etat_final_OFF(A_determinise, clé_succ);
+				}
 			}
 
 			// On libère la mémoire
@@ -620,18 +640,13 @@ AUTOMATE determinise (AUTOMATE A) {
 	unsigned int poubelle = A_determinise.N - 1;
 	A_determinise.F[poubelle] = 0; // L'état poubelle n'est pas final
 
-	// On doit trouver les transitions manquantes qui seront des transitions vers la poubelle
-
 	// Pour chaque état de A_determinise
 	for (unsigned int q_depart = 0; q_depart < A_determinise.N; q_depart++) {
-
-		//printf("Etat courant: %d\n", q_depart);
 
 		// Pour chaque lettre de l'alphabet
 		for (int i = 0; i < alphabet_size; i++) {
 
 			char curr_letter = alphabet[i];
-			//printf("	Lettre courante: %c\n", curr_letter);
 
 			// On va voir si la transition avec comme état de départ q et comme lettre alphabet_filtre[i] existe
 			int manquante = 1;
@@ -641,7 +656,6 @@ AUTOMATE determinise (AUTOMATE A) {
 
 				// Si on trouve une transition avec l'état courant et la lettre courante
 				if (check->p == q_depart && check->a == curr_letter) {
-					//printf("	Transition trouvée: (%d,%c,%d)\n", check->p, affcar(check->a), check->q);
 					manquante = 0;
 					break;
 				}
@@ -651,9 +665,7 @@ AUTOMATE determinise (AUTOMATE A) {
 			// On vérifie maintenant si la transition existe
 			if (manquante) {
 				// On ajoute la transition (q, curr_letter, poubelle)
-				//printf("Transition manquante: (%d,%c)\n", q_depart, curr_letter);
 				A_determinise = ajoute_une_transition(A_determinise, q_depart, curr_letter, poubelle);
-				//printf("Transition ajoutée: (%d,%c,%d)\n", q_depart, curr_letter, poubelle);
 			}
 
 		}
