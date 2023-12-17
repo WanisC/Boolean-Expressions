@@ -104,11 +104,11 @@ void afficher(AUTOMATE A) {
 	struct transition *t = A.T;
 	i = 1;
 	while (t) {
-			//if (i > A.nb_trans) break;
-			printf(" (%d,%c,%d)",t->p,affcar(t->a),t->q);
-			t = t->suiv;
-			if ((i%5 == 0) && t) printf("\n                  ");
-			i++;
+		if (i > A.nb_trans) break;
+		printf(" (%d,%c,%d)",t->p,affcar(t->a),t->q);
+		t = t->suiv;
+		if ((i%5 == 0) && t) printf("\n                  ");
+		i++;
 	}
 	printf("\n\n");
 }
@@ -670,7 +670,6 @@ AUTOMATE determinise (AUTOMATE A) {
 
 		}
 	}
-
 	
 	// On libère la mémoire de la liste chaînée / des tableaux d'alphabet
 	liberer_chaine(a_traiter);
