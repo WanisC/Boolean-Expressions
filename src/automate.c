@@ -27,7 +27,7 @@ struct transition *inserer_trie (struct transition *deb, struct transition *t) {
 	if (!deb) return t;
 	if (deb_sup_t (deb,t)) {t->suiv = deb; return t;}
 	if ((deb->p == t->p) && (deb->a == t->a) && (deb->q == t->q)) {
-		fprintf(stderr,"WARNING 001: Transition (%d,%c,%d) déjà présente\n",t->p,affcar(t->a),t->q); 
+//		fprintf(stderr,"WARNING 001: Transition (%d,%c,%d) déjà présente\n",t->p,affcar(t->a),t->q); 
 		return deb;
 		}
 	deb->suiv = inserer_trie(deb->suiv,t);
@@ -44,6 +44,7 @@ AUTOMATE ajoute_une_transition (AUTOMATE A, unsigned int p, char a, unsigned int
 	t->p = p;
 	t->a = a;
 	t->q = q;
+	t->suiv = NULL;
 //	printf("INSERTION Transition (%d,%c,%d) \n",t->p,affcar(t->a),t->q); 
 	A.T = inserer_trie(A.T,t);
 	(A.nb_trans)++;
@@ -104,7 +105,6 @@ void afficher(AUTOMATE A) {
 	struct transition *t = A.T;
 	i = 1;
 	while (t) {
-		if (i > A.nb_trans) break;
 		printf(" (%d,%c,%d)",t->p,affcar(t->a),t->q);
 		t = t->suiv;
 		if ((i%5 == 0) && t) printf("\n                  ");
@@ -182,145 +182,9 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 	return C;
 }
 
-//###
-// 6. Suppression des epsilon-transitions
-//###
-
-// Renvoie vrai si la transition (p,a,q) est dans l'automate A
-int transition_presente (AUTOMATE A, unsigned int p, char a, unsigned int q) {
-	// On va parcourir les transitions de A
-	struct transition *t = A.T;
-	while (t) {
-		// Si on trouve la transition (p,a,q) alors on renvoie vrai
-		if (t->p == p && t->a == a && t->q == q) return 1;
-		// Sinon on passe à la transition suivante
-		t = t->suiv;
-	}
-	// Si on arrive ici alors la transition n'est pas présente dans A
-	return 0;
-}
-
-AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
-	// Pour chaque état q1
-	for (unsigned int q1 = 0; q1 < A.N; q1++) {
-		//printf("Etat Q1: %d\n", q1);
-
-		// On va parcourir les transitions de A
-		struct transition *simple_trans = A.T;
-		while (simple_trans) {
-
-			// Cas: c'est une transition epsilon avec q1 comme état de départ
-			if (simple_trans->p == q1 && simple_trans->a == 0) {
-				//printf("	1. Transition epsilon (%d,%c,%d)\n", simple_trans->p, affcar(simple_trans->a), simple_trans->q);
-
-				// On initialise l'état q2 que l'on va actualiser dans le cas d'une transition epsilon
-				unsigned int q2 = simple_trans->q;
-				//printf("		1.1. Etat Q2: %d\n", q2);
-
-				// On va parcourir les transitions de A depuis q2
-				struct transition *q2_trans = A.T;
-
-				//printf("		1.2. Recherche des transitions depuis q2\n");
-				// On va parcourir les transitions de A depuis q2
-				while (q2_trans) {
-
-					// Cas: on trouve une transition non epsilon
-					if (q2_trans->p == q2 && q2_trans->a != 0) {
-						//printf("			Transition non epsilon trouvée: (%d,%c,%d)\n", q2, affcar(q2_trans->a), q2_trans->q);
-						//printf("			- Vérifions si la transition (%d,%c,%d) existe déjà\n", q1, affcar(q2_trans->a), q2_trans->q);
-
-						// Cas: la transition n'existe pas
-						if (!transition_presente(A, q1, q2_trans->a, q2_trans->q)) {
-							//printf("				|-Transition (%d,%c,%d) NON présente\n", q1, affcar(q2_trans->a), q2_trans->q);
-
-							// On ajoute la transition (q1,a,q3)
-							A = ajoute_une_transition(A, q1, q2_trans->a, q2_trans->q);
-							//printf("				|-Transition ajoutée\n");
-
-							// On regarde si q2 est un état final pour modifier q1 si besoin
-							if (A.F[q2]) {
-								etat_final_ON(A, q1);
-							}
-						}
-						q2_trans = q2_trans->suiv;
-
-					// Cas: on trouve une transition epsilon
-					} else if (q2_trans->p == q2 && q2_trans->a == 0) {
-						//printf("			Transition epsilon (%d,%c,%d)\n", q2_trans->p, affcar(q2_trans->a), q2_trans->q);
-
-						q2 = q2_trans->q; // On démarre la recherche depuis q2
-						//printf("			Recherche des transitions depuis: %d\n", q2);
-
-						// On va parcourir les transitions de A depuis q2
-						struct transition *q4_trans = A.T;
-						while (q4_trans) {
-							// Cas: on trouve une transition non epsilon
-							if (q4_trans->p == q2 && q4_trans->a != 0) {
-								//printf("			Transition non epsilon trouvée: (%d,%c,%d)\n", q4_trans->p, affcar(q4_trans->a), q4_trans->q);
-								//printf("			- Vérifions si la transition (%d,%c,%d) existe déjà\n", q1, affcar(q4_trans->a), q4_trans->q);
-
-								// Cas: la transition n'existe pas
-								if (!transition_presente(A, q1, q4_trans->a, q4_trans->q)) {
-									//printf("				|-Transition (%d,%c,%d) NON présente\n", q1, affcar(q4_trans->a), q4_trans->q);
-
-									// On ajoute la transition (q1,a,q3)
-									A = ajoute_une_transition(A, q1, q4_trans->a, q4_trans->q);
-									//printf("				|-Transition ajoutée\n");
-
-									// On regarde si q2 est un état final pour modifier q1 si besoin
-									if (A.F[simple_trans->p]) {
-										etat_final_ON(A, q1);
-									}
-								}
-								// On passe à la transition suivante et on actualise q2
-								q2_trans = q2_trans->suiv;
-								q2 = q2_trans->p;
-								break;
-							} else q4_trans = q4_trans->suiv;
-						}
-					} else q2_trans = q2_trans->suiv;
-				}
-				free(q2_trans);
-			}
-			simple_trans = simple_trans->suiv;
-		}
-		free(simple_trans);
-	}
-
-	// On va parcourir les transitions de A pour trouver les transitions epsilon et les supprimer
-	struct transition *supp_e = A.T;
-	struct transition *prev = NULL;
-	while (supp_e) {
-		// Cas: c'est une transition epsilon
-		if (supp_e->a == 0) {
-			// On prend la transition suivante
-			struct transition *next = supp_e->suiv;
-			// On libère la mémoire de la transition epsilon
-			free(supp_e);
-			// On met à jour les pointeurs
-			// Cas: c'est la première transition
-			if (prev == NULL) {
-				A.T = next; 
-			// Cas: ce n'est pas la première transition
-			} else {
-				prev->suiv = next;
-			}
-			// On passe à la transition suivante
-			supp_e = next;
-			// On décrémente le nombre de transitions
-			A.nb_trans--;
-		// Cas: ce n'est pas une transition epsilon
-		} else { // On passe simplement à la transition suivante
-			prev = supp_e;
-			supp_e = supp_e->suiv;
-		}
-	}
-	return A;
-}
-
 
 	//###
-	// Vérification si l'automate est déjà déterministe
+	// Méthodes supplémentaires
 	//###
 
 // Renvoie vrai si la lettre est déjà présente dans le tableau
@@ -425,6 +289,7 @@ void printList(struct listeChainee *head) {
         printf("\n");
         head = head->suiv;
     }
+	free(head);
 }
 
 // Libère la mémoire d'une liste chaînée d'ensemble d'états
@@ -436,6 +301,8 @@ void liberer_chaine(struct listeChainee *chaine) {
         chaine = chaine->suiv;
         free(tmp);
     }
+	free(chaine);
+	free(tmp);
 }
 
 // Fonction recherchant la clé d'un ensemble d'états dans une liste chaînée (si l'ensemble d'états n'est pas présent, on renvoie la clé précédente + 1)
@@ -463,16 +330,175 @@ int recherche_cle(struct listeChainee *liste, unsigned int *ens, int taille_ens)
 		sauv = curr->clé;
 		curr = curr->suiv;
 	}
+	free(curr);
 	// Si on arrive ici, c'est que l'ensemble d'états n'est pas présent dans la liste, on renvoie donc la clé précédente + 1
 	return sauv + 1;
+}
+
+// Renvoie vrai si la transition (p,a,q) est dans l'automate A
+int transition_presente (AUTOMATE A, unsigned int p, char a, unsigned int q) {
+	// On va parcourir les transitions de A
+	struct transition *t = A.T;
+	while (t) {
+		// Si on trouve la transition (p,a,q) alors on renvoie vrai
+		if (t->p == p && t->a == a && t->q == q) return 1;
+		// Sinon on passe à la transition suivante
+		t = t->suiv;
+	}
+	free(t);
+	// Si on arrive ici alors la transition n'est pas présente dans A
+	return 0;
+}
+
+// Recherche les transitions non epsilon pour avoir la transition (q1,a,q3) si elle n'existe pas déjà avec a != epsilon
+void recherche_transition_non_epsilon (AUTOMATE A, unsigned int q1, unsigned int q2) {
+
+	// On va parcourir les transitions de A
+	struct transition *parcours = A.T;
+	while (parcours) {
+
+		// Si on trouve la transition (q1,a,q2) avec a != epsilon
+		if (parcours->p == q2 && parcours->a != 0) {
+			printf("AVANT Nombre de transitions: %d\n", A.nb_trans);
+			printf("				Ajout (%d,%c,%d)\n", q1, affcar(parcours->a), parcours->q);
+			A = ajoute_une_transition(A, q1, parcours->a, parcours->q);
+			printf("APRES Nombre de transitions: %d\n", A.nb_trans);
+
+		} else if (parcours->p == q2 && parcours->a == 0) {
+			printf("AUTRE CAS Nombre de transitions: %d\n", A.nb_trans);
+			recherche_transition_non_epsilon(A, q1, parcours->q);
+		}
+		// Sinon on passe à la transition suivante
+		parcours = parcours->suiv;
+	}
+	free(parcours);
+}
+
+//###
+// 6. Suppression des epsilon-transitions
+//###
+
+AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
+
+	// Pour chaque état de A
+	for (unsigned int q1 = 0; q1 < A.N; q1++) {
+		//printf("q1: %d\n", q1);
+
+		// Parcours des transitions de A
+		struct transition *A_t = A.T;
+		//printf("	Parcours des transitions de A\n");
+		while (A_t) {
+
+			// Nous allons distinguer 2 cas:
+
+				// Cas 1: la transition a pour état de départ q1 et la lettre est epsilon
+				// Cas 2: la transition a pour état de départ q1 et la lettre n'est pas epsilon
+				// Cas 3: la transition n'a pas pour état de départ q1 
+
+				// Le cas 2 et 3 ne nous intéresse pas car nous passons simplement à la transition suivante
+
+			// Cas 1
+			if (A_t->p == q1 && A_t->a == 0) {
+
+				//printf("	(%d,%c,%d)\n", A_t->p, affcar(A_t->a), A_t->q);
+
+				// On doit rechercher maintenant les transitions non-epsilon que l'on va ajouter à A pour l'état q1
+				
+				unsigned int q2 = A_t->q; // On initialise l'état q2 que l'on va actualiser dans le cas d'une transition epsilon
+				//printf("		q2: %d\n", q2);
+
+				// On va parcourir les transitions de A depuis q2
+				struct transition *A_q2 = A.T;
+				//printf("		Parcours des transitions depuis q2\n");
+				while (A_q2) {
+					
+					// Nous allons distinguer 3 cas:
+
+						// Cas 1: la transition a pour état de départ q2 et la lettre est epsilon
+						// Cas 2: la transition a pour état de départ q2 et la lettre n'est pas epsilon
+						// Cas 3: la transition n'a pas pour état de départ q2
+
+						// Ici, le cas 2 nous intéresse car il nous permet d'ajouter la transition (q1,a,q3) si elle n'existe pas déjà
+						// Le cas 3 ne nous intéresse pas car nous passons simplement à la transition suivante
+
+					// Cas 1
+					if (A_q2->p == q2 && A_q2->a == 0) {
+
+						//printf("			Cas 1: (%d,%c,%d)\n", A_q2->p, affcar(A_q2->a), A_q2->q);
+
+						//printf("				Recherche des transitions non epsilon avec q1: %d, q2: %d\n", q1, q2);
+
+						recherche_transition_non_epsilon(A, q1, q2);
+
+						// Affichage des données de A
+						printf("\n");
+						printf("		Nombre d'états: %d\n", A.N);
+						printf("		Nombre de transitions: %d\n", A.nb_trans);
+						
+
+					// Cas 2
+					} else if (A_q2->p == q2 && A_q2->a != 0) {
+						
+						//printf("			Cas 2: (%d,%c,%d)\n", A_q2->p, affcar(A_q2->a), A_q2->q);
+
+						// On va ajouter la transition (q1,a,q3) si elle n'existe pas déjà
+						if (!transition_presente(A, q1, A_q2->a, A_q2->q)) {
+							//printf("				Ajout (%d,%c,%d)\n", q1, affcar(A_q2->a), A_q2->q);
+
+							// On ajoute la transition (q1,a,q3)
+							A = ajoute_une_transition(A, q1, A_q2->a, A_q2->q);
+
+							// On regarde si q2 est un état final pour modifier q1 si besoin
+							if (A.F[q2]) {
+								etat_final_ON(A, q1);
+							}
+						}
+						
+					}
+					A_q2 = A_q2->suiv;
+				}
+
+			}
+			A_t = A_t->suiv;
+		}
+	}
+
+	// On va parcourir les transitions de A pour trouver les transitions epsilon et les supprimer
+	struct transition *supp_e = A.T;
+	struct transition *prev = NULL;
+	while (supp_e) {
+		// Cas: c'est une transition epsilon
+		if (supp_e->a == 0) {
+			// On prend la transition suivante
+			struct transition *next = supp_e->suiv;
+			// On libère la mémoire de la transition epsilon
+			free(supp_e);
+			// On met à jour les pointeurs
+			// Cas: c'est la première transition
+			if (prev == NULL) {
+				A.T = next; 
+			// Cas: ce n'est pas la première transition
+			} else {
+				prev->suiv = next;
+			}
+			// On passe à la transition suivante
+			supp_e = next;
+			// On décrémente le nombre de transitions
+			A.nb_trans--;
+		// Cas: ce n'est pas une transition epsilon
+		} else { // On passe simplement à la transition suivante
+			prev = supp_e;
+			supp_e = supp_e->suiv;
+		}
+	}
+	
+	free(supp_e);
+	return A;
 }
 
 //###
 // 7. Déterminisation
 //###
-// ? https://www.geeksforgeeks.org/data-structures/linked-list/singly-linked-list/
-// ? https://www.learn-c.org/en/Linked_lists
-// ? https://waytolearnx.com/2019/08/fusionner-deux-tableaux-en-c.html (fusionner deux tableaux)
 
 AUTOMATE determinise (AUTOMATE A) {
 
@@ -492,6 +518,8 @@ AUTOMATE determinise (AUTOMATE A) {
 	// On va filtrer le tableau pour ne garder que les lettres uniques
 	int alphabet_size;
 	char *alphabet = filtrage_alphabet(tab, index, &alphabet_size);
+
+	free(tab);
 
 	// On initialise un index pour la clé
 	int index_cle = 0;
@@ -587,34 +615,10 @@ AUTOMATE determinise (AUTOMATE A) {
 				// On met à jour le nombre d'états de A_determinise
 				A_determinise.N = index_cle;
 
-				// // Affichage de A_determinise //! A SUPPRIMER A LA FIN
-				// printf("### AVANT INSERTION ###\n");
-				// printf("Nombre d'états: %d\n", A_determinise.N);
-				// printf("Nombre de transitions: %d\n", A_determinise.nb_trans);
-				// printf("Transitions:\n");
-				// struct transition *transi1 = A_determinise.T;
-				// if (!transi1) printf("		Aucune transition\n");
-				// else while (transi1) {
-				// 		printf("	(%d,%c,%d)\n",transi1->p,affcar(transi1->a),transi1->q);
-				// 		transi1 = transi1->suiv;
-				// }
-				// printf("\n\n");
-
 				//printf("		Nombre d'états: %d\n", A_determinise.N);
 				// On ajoute la transition (curr_clé, curr_letter, clé_succ) à A_determinise
 				A_determinise = ajoute_une_transition(A_determinise, curr_clé, curr_letter, clé_succ);
-
-				// // Affichage de A_determinise //! A SUPPRIMER A LA FIN
-				// printf("### APRES INSERTION ###\n");
-				// printf("Nombre d'états: %d\n", A_determinise.N);
-				// printf("Nombre de transitions: %d\n", A_determinise.nb_trans);
-				// printf("Transitions:\n");
-				// struct transition *transi = A_determinise.T;
-				// while (transi) {
-				// 		printf("	(%d,%c,%d)\n",transi->p,affcar(transi->a),transi->q);
-				// 		transi = transi->suiv;
-				// }
-				// printf("\n\n");
+				//printf("		Transition ajoutée: (%d,%c,%d)\n", curr_clé, affcar(curr_letter), clé_succ);
 
 				// Vérification si l'ensemble d'états successeurs contient un état final
 				for (int k = 0; k < taille_successeurs; k++) {
@@ -673,7 +677,6 @@ AUTOMATE determinise (AUTOMATE A) {
 	
 	// On libère la mémoire de la liste chaînée / des tableaux d'alphabet
 	liberer_chaine(a_traiter);
-	free(tab); 
 	free(alphabet);
 
 	return A_determinise;
@@ -696,32 +699,40 @@ int reconnait (AUTOMATE A, char *mot) {
 	int retour = 0;
 	unsigned int curr_etat = 0; // Pointeur pour sauvegarder l'état courant
 	char *recherche_mot = mot;
+
 	// Tant qu'il reste des lettres dans le mot
-	//printf("MOT A RECONNAITRE: %s\n", mot);
 	while (recherche_mot[0]) { 
 		struct transition *t = A.T;
+
 		// Recherche de la transition (curr_etat, mot[0], q)
 		while (t) {
+
 			// Si on trouve la transition (curr_etat, mot[0], q)
 			if (t->p == curr_etat && t->a == recherche_mot[0]) {
-				//printf("	TRANSITION TROUVEE: (%d,%c,%d)\n", t->p, affcar(t->a), t->q);
 				curr_etat = t->q;
-				//printf("	ETAT COURANT: %d\n", curr_etat);
 				break;
 			}
 			t = t->suiv;
-		}
-		// Si on ne trouve pas la transition (curr_etat, mot[0], q)
-		if (!t) {
-			printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
-			return retour;
+
+			// On vérifie si on se trouve sur l'état poubelle
+			if (curr_etat == A.N - 1) {
+				// On regarde si on veut reconnaître le mot vide, on adapte le message en fonction
+				if (strlen(mot) == 0) printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
+				else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
+				return retour;
+			}
 		}
 		recherche_mot++;
-		//printf("	MOT RESTANT: %s\n", recherche_mot);
 	}
-	//printf("ETAT ARRIVEE APRES PARCOURS: %d\n", curr_etat);
+
 	retour = A.F[curr_etat]; // Si l'état dans lequel est final alors le mot est reconnu, sinon non
-	if (retour) printf("%s EST RECONNU PAR %s\n", mot, A.nom);
-	else    	printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
+	if (retour) {
+		if (strlen(mot) == 0) printf("Le mot vide EST RECONNU PAR %s\n", A.nom);
+		else printf("%s EST RECONNU PAR %s\n", mot, A.nom);
+		
+	} else {
+		if (strlen(mot) == 0) printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
+		else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
+	}
 	return retour;
 }
