@@ -294,6 +294,7 @@ int recherche_cle(struct listeChainee *liste, unsigned int *ens, int taille_ens)
 		curr = curr->suiv;
 	}
 	free(curr);
+	
 	// Si on arrive ici, c'est que l'ensemble d'états n'est pas présent dans la liste, on renvoie donc la clé précédente + 1
 	return sauv + 1;
 }

@@ -65,6 +65,5 @@ int main () {
     reconnait(A_determinise,"ca");
     reconnait(A_determinise,"");
 
-
     return 0;
 }
