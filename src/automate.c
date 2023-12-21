@@ -473,6 +473,13 @@ AUTOMATE determinise (AUTOMATE A) {
 
 	// On va mettre l'état initial (0) dans liste->etat
 	struct listeChainee *a_traiter = malloc(sizeof(struct listeChainee));
+
+	// On doit tester la valeur de retour de malloc
+	if (a_traiter == NULL) {
+		printf("Erreur lors de l'allocation mémoire: a_traiter\n");
+		exit(1);
+	}
+	
 	a_traiter->etat = malloc(sizeof(unsigned int));
 
 	// On doit tester la valeur de retour de malloc
@@ -488,6 +495,13 @@ AUTOMATE determinise (AUTOMATE A) {
 
 	// La liste chaînée ARCHIVES va contenir tous les ensembles d'états afin de l'utiliser pour des tests avant d'ajouter un nouvel ensemble d'états
 	struct listeChainee *ARCHIVES = malloc(sizeof(struct listeChainee));
+
+	// On doit tester la valeur de retour de malloc
+	if (ARCHIVES == NULL) {
+		printf("Erreur lors de l'allocation mémoire: ARCHIVES\n");
+		exit(1);
+	}
+
 	ARCHIVES->etat = malloc(sizeof(unsigned int));
 
 	// On doit tester la valeur de retour de malloc
