@@ -202,7 +202,7 @@ int dejaPresent(char lettre, char *tab, int taille) {
 
 // Filtre le tableau pour garder que les lettres uniques
 char* filtrage_alphabet(char *tab, int taille, int *nb_element) {
-	char *filtreTab = malloc(taille * sizeof(char));
+	char *filtreTab = calloc(taille, sizeof(char));
 
 	int index = 0;
 
@@ -274,24 +274,6 @@ void ajouter_etat(struct listeChainee *liste, unsigned int *ens, int taille) {
 	curr->suiv = nouveau;
 }
 
-//! A SUPPRIMER A LA FIN
-// Fonction pour afficher les éléments de la liste 
-void printList(struct listeChainee *head) {
-    while (head != NULL) {
-		printf("clé: %d, ", head->clé);
-		printf("size : %d, ", head->size);
-		printf("ensemble: {");
-        for (int i = 0; i < head->size; i++) {
-			if (i == head->size - 1) printf("%d", head->etat[i]);
-			else printf("%d, ", head->etat[i]);
-        }
-		printf("}");
-        printf("\n");
-        head = head->suiv;
-    }
-	free(head);
-}
-
 // Libère la mémoire d'une liste chaînée d'ensemble d'états
 void liberer_chaine(struct listeChainee *chaine) {
 	struct listeChainee *tmp;
@@ -359,13 +341,19 @@ void recherche_transition_non_epsilon (AUTOMATE A, unsigned int q1, unsigned int
 
 		// Si on trouve la transition (q1,a,q2) avec a != epsilon
 		if (parcours->p == q2 && parcours->a != 0) {
-			printf("AVANT Nombre de transitions: %d\n", A.nb_trans);
-			printf("				Ajout (%d,%c,%d)\n", q1, affcar(parcours->a), parcours->q);
-			A = ajoute_une_transition(A, q1, parcours->a, parcours->q);
-			printf("APRES Nombre de transitions: %d\n", A.nb_trans);
+
+			// On vérifie si la transition n'existe pas déjà
+			if (!transition_presente(A, q1, parcours->a, parcours->q)) {
+				A = ajoute_une_transition(A, q1, parcours->a, parcours->q);
+				//printf("				Ajout (%d,%c,%d)\n", q1, affcar(parcours->a), parcours->q);
+
+				// On regarde si q2 est un état final pour modifier q1 si besoin
+				if (A.F[q2]) {
+					etat_final_ON(A, q1);
+				}
+			}
 
 		} else if (parcours->p == q2 && parcours->a == 0) {
-			printf("AUTRE CAS Nombre de transitions: %d\n", A.nb_trans);
 			recherche_transition_non_epsilon(A, q1, parcours->q);
 		}
 		// Sinon on passe à la transition suivante
@@ -407,65 +395,18 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 				unsigned int q2 = A_t->q; // On initialise l'état q2 que l'on va actualiser dans le cas d'une transition epsilon
 				//printf("		q2: %d\n", q2);
 
-				// On va parcourir les transitions de A depuis q2
-				struct transition *A_q2 = A.T;
-				//printf("		Parcours des transitions depuis q2\n");
-				while (A_q2) {
-					
-					// Nous allons distinguer 3 cas:
-
-						// Cas 1: la transition a pour état de départ q2 et la lettre est epsilon
-						// Cas 2: la transition a pour état de départ q2 et la lettre n'est pas epsilon
-						// Cas 3: la transition n'a pas pour état de départ q2
-
-						// Ici, le cas 2 nous intéresse car il nous permet d'ajouter la transition (q1,a,q3) si elle n'existe pas déjà
-						// Le cas 3 ne nous intéresse pas car nous passons simplement à la transition suivante
-
-					// Cas 1
-					if (A_q2->p == q2 && A_q2->a == 0) {
-
-						//printf("			Cas 1: (%d,%c,%d)\n", A_q2->p, affcar(A_q2->a), A_q2->q);
-
-						//printf("				Recherche des transitions non epsilon avec q1: %d, q2: %d\n", q1, q2);
-
-						recherche_transition_non_epsilon(A, q1, q2);
-
-						// Affichage des données de A
-						printf("\n");
-						printf("		Nombre d'états: %d\n", A.N);
-						printf("		Nombre de transitions: %d\n", A.nb_trans);
-						
-
-					// Cas 2
-					} else if (A_q2->p == q2 && A_q2->a != 0) {
-						
-						//printf("			Cas 2: (%d,%c,%d)\n", A_q2->p, affcar(A_q2->a), A_q2->q);
-
-						// On va ajouter la transition (q1,a,q3) si elle n'existe pas déjà
-						if (!transition_presente(A, q1, A_q2->a, A_q2->q)) {
-							//printf("				Ajout (%d,%c,%d)\n", q1, affcar(A_q2->a), A_q2->q);
-
-							// On ajoute la transition (q1,a,q3)
-							A = ajoute_une_transition(A, q1, A_q2->a, A_q2->q);
-
-							// On regarde si q2 est un état final pour modifier q1 si besoin
-							if (A.F[q2]) {
-								etat_final_ON(A, q1);
-							}
-						}
-						
-					}
-					A_q2 = A_q2->suiv;
-				}
+				recherche_transition_non_epsilon(A, q1, q2);
 
 			}
 			A_t = A_t->suiv;
 		}
+		free(A_t);
 	}
 
 	// On va parcourir les transitions de A pour trouver les transitions epsilon et les supprimer
 	struct transition *supp_e = A.T;
 	struct transition *prev = NULL;
+	int cpt = 0;
 	while (supp_e) {
 		// Cas: c'est une transition epsilon
 		if (supp_e->a == 0) {
@@ -489,8 +430,12 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 		} else { // On passe simplement à la transition suivante
 			prev = supp_e;
 			supp_e = supp_e->suiv;
+			cpt++;
 		}
 	}
+
+	// On met à jour le nombre de transitions car dans la méthode recherche_transition_non_epsilon, on a ajouté des transitions mais le nombre de transitions n'a pas été mis à jour
+	A.nb_trans = cpt;
 	
 	free(supp_e);
 	return A;
@@ -504,7 +449,7 @@ AUTOMATE determinise (AUTOMATE A) {
 
 	// On va récupérer l'alphabet de l'automate
 	int index = 0;
-	char *tab = malloc(A.nb_trans * sizeof(char));
+	char *tab = calloc(26, sizeof(char));
 	struct transition *auto_A = A.T;
 
 	while (auto_A) {
