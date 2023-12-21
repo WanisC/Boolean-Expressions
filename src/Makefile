@@ -18,18 +18,19 @@ main.c: regexp
 
 # Pour les fuites mémoires
 valgrind: automate.c main.1.c
-	gcc -g -Og -ggdb3 automate.c main.1.c -o valgrind_check
+	gcc -g -ggdb3 automate.c main.1.c -o valgrind_check
+# -g et -ggdb3 pour demander au compilateur de générer des informations de débogage dans le binaire
 	valgrind --leak-check=full ./valgrind_check
 
 # Pour le débogage
 gdb: automate.c main.1.c
-	gcc -g -Og -ggdb3 automate.c main.1.c -o gdb_check
+	gcc -g -ggdb3 automate.c main.1.c -o gdb_check
+# -g et -ggdb3 pour demander au compilateur de générer des informations de débogage dans le binaire
 	gdb ./gdb_check
 
 exec: automate.c main.1.c
 	gcc automate.c main.1.c -o main
 	./main
-
 
 # Commenter deux des trois lignes en fonction de l'ordi
 # La deuxième et la troisième est normalement pour les MAC
