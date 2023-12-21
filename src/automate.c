@@ -315,8 +315,6 @@ int transition_presente (AUTOMATE A, unsigned int p, char a, unsigned int q) {
 
 // Recherche les transitions non epsilon pour avoir la transition (q1,a,q3) si elle n'existe pas déjà avec a != epsilon
 void recherche_transition_non_epsilon (AUTOMATE A, unsigned int q1, unsigned int q2) { 
-//! renvoyer un automate avec les transitions ajoutées puis une fois de retour dans la méthode supprime_epsilon_transitions, 
-//! on ajoute les transtions non epsilon de A dans l'automate retourné ?
 
 	// On va parcourir les transitions de A
 	struct transition *parcours = A.T;
@@ -328,7 +326,7 @@ void recherche_transition_non_epsilon (AUTOMATE A, unsigned int q1, unsigned int
 			// On vérifie que la transition n'est pas dèjà présente
 			if (!transition_presente(A, q1, parcours->a, parcours->q)) {
 
-				A = ajoute_une_transition(A, q1, parcours->a, parcours->q); //! bizarrement il ne me compte pas les transitions ajoutées
+				A = ajoute_une_transition(A, q1, parcours->a, parcours->q);
 				//printf("			Ajout (%d,%c,%d)\n", q1, affcar(parcours->a), parcours->q);
 			}
 
@@ -438,6 +436,13 @@ AUTOMATE determinise (AUTOMATE A) {
 	// On va récupérer l'alphabet de l'automate
 	int alphabet_size = 0;
 	char *alphabet = calloc(26, sizeof(char));
+
+	// On doit tester la valeur de retour de calloc
+	if (alphabet == NULL) {
+		printf("Erreur lors de l'allocation mémoire: alphabet\n");
+		exit(1);
+	}
+
 	struct transition *auto_A = A.T;
 
 	while (auto_A) {
@@ -456,12 +461,11 @@ AUTOMATE determinise (AUTOMATE A) {
 
 	alphabet = realloc(alphabet, alphabet_size * sizeof(char));
 
-	// Affichage de l'alphabet
-	printf("Alphabet: ");
-	for (int i = 0; i < alphabet_size; i++) {
-		printf("%c ", alphabet[i]);
+	// On doit tester la valeur de retour de realloc
+	if (alphabet == NULL) {
+		printf("Erreur lors de l'allocation mémoire: alphabet\n");
+		exit(1);
 	}
-	printf("\n");
 
 	// On initialise un index pour la clé
 	int index_cle = 0;
@@ -469,6 +473,13 @@ AUTOMATE determinise (AUTOMATE A) {
 	// On va mettre l'état initial (0) dans liste->etat
 	struct listeChainee *a_traiter = malloc(sizeof(struct listeChainee));
 	a_traiter->etat = malloc(sizeof(unsigned int));
+
+	// On doit tester la valeur de retour de malloc
+	if (a_traiter->etat == NULL) {
+		printf("Erreur lors de l'allocation mémoire: a_traiter->etat\n");
+		exit(1);
+	}
+
 	a_traiter->etat[0] = 0;
 	a_traiter->cle = index_cle;
 	a_traiter->suiv = NULL;
@@ -477,6 +488,13 @@ AUTOMATE determinise (AUTOMATE A) {
 	// La liste chaînée ARCHIVES va contenir tous les ensembles d'états afin de l'utiliser pour des tests avant d'ajouter un nouvel ensemble d'états
 	struct listeChainee *ARCHIVES = malloc(sizeof(struct listeChainee));
 	ARCHIVES->etat = malloc(sizeof(unsigned int));
+
+	// On doit tester la valeur de retour de malloc
+	if (ARCHIVES->etat == NULL) {
+		printf("Erreur lors de l'allocation mémoire: ARCHIVES->etat\n");
+		exit(1);
+	}
+
 	ARCHIVES->etat[0] = 0;
 	ARCHIVES->cle = index_cle;
 	ARCHIVES->suiv = NULL;
@@ -504,6 +522,13 @@ AUTOMATE determinise (AUTOMATE A) {
 			// On va créer le tableau des successeurs trié de l'ensemble d'états courant avec la lettre courante en sauvegardant sa taille
 			int taille_successeurs;
 			unsigned int *successeurs = malloc(A.N * sizeof(unsigned int));
+
+			// On doit tester la valeur de retour de malloc
+			if (successeurs == NULL) {
+				printf("Erreur lors de l'allocation mémoire: successeurs\n");
+				exit(1);
+			}
+
 			int index = 0;
 
 			// On va parcourir la longueur du tableau d'états de départ
@@ -529,6 +554,7 @@ AUTOMATE determinise (AUTOMATE A) {
 
 			// On redimensionne le tableau
 			successeurs = realloc(successeurs, index * sizeof(unsigned int));
+			
 			// On met à jour le nombre d'éléments dans le tableau
 			taille_successeurs = index;
 			// On va trier dans l'ordre croissant le tableau
