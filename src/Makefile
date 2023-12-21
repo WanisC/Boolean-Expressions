@@ -16,6 +16,16 @@ main.c: regexp
 	./regexp < test.1
 	cat main.c
 
+# Pour les fuites mémoires
+valgrind: automate.c main.1.c
+	gcc -g -Og -ggdb3 automate.c main.1.c -o valgrind_check
+	valgrind --leak-check=full ./valgrind_check
+
+# Pour le débogage
+gdb: automate.c main.1.c
+	gcc -g -Og -ggdb3 automate.c main.1.c -o gdb_check
+	gdb ./gdb_check
+
 
 # Commenter deux des trois lignes en fonction de l'ordi
 # La deuxième et la troisième est normalement pour les MAC
@@ -32,9 +42,6 @@ regexp.tab.c: regexp.y
 # -d pour générer le fichier exo01.tab.h
 # -v pour générer le fichier exo01.output
 # -g pour générer le fichier exo01.vcg
-
-test: regexp.yy.c
-	gcc -o regexptest $^ ${LDFLAGS} -ll
 	
 exetest: regexp
 	./$^ < test.1
