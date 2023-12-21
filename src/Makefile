@@ -55,6 +55,8 @@ install:
 
 clean:
 	rm -f main
+	rm -f gdb_check
+	rm -f valgrind_check
 	rm -f main.c
 	rm -f *.o
 	rm -f *.output
