@@ -64,6 +64,9 @@ install:
 install_valgrind:
 	sudo apt install valgrind
 
+install_gdb:
+	sudo apt install gdb
+
 
 clean:
 	rm -f main
