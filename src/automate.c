@@ -139,6 +139,7 @@ AUTOMATE union_automate (AUTOMATE A, AUTOMATE B) {
 	C = ajoute_toutes_les_transition(C,B.T,1+A.N); // Ajout des transitions de B décalées de 1+A.N
 	C = ajoute_une_transition(C,0,epsilon,1);         // De l'état initial de C vers celui de A
 	C = ajoute_une_transition(C,0,epsilon,A.N+1);     // De l'état initial de C vers celui de B
+
 	return C;
 }
 
@@ -163,6 +164,7 @@ AUTOMATE concat_automate (AUTOMATE A, AUTOMATE B) {
 	// Ajout des transitions des états finaux de A vers état initial de B
 	for (i = 0; i < A.N ; i++)
 		if (A.F[i]) C = ajoute_une_transition(C,i,epsilon,A.N); // Ajout vers l'ancien état initial de B
+
 	return C;
 }
 
@@ -179,6 +181,7 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 	C = ajoute_toutes_les_transition(C,A.T,0);   // Ajout des transitions de A
 	for (i = 0; i < A.N ; i++)
 		if (A.F[i]) C = ajoute_une_transition(C,i,epsilon,0); // Ajout des transitions des états finauxvers 0
+
 	return C;
 }
 
@@ -191,6 +194,7 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 int dejaPresent(char lettre, char *tab, int taille) {
 	// Parcours du tableau
 	for (int i = 0; i < taille; i++) {
+
 		// Si on trouve la lettre dans le tableau, on renvoie vrai
 		if (tab[i] == lettre) {
 			return 1;
@@ -200,31 +204,9 @@ int dejaPresent(char lettre, char *tab, int taille) {
 	return 0;
 }
 
-// Filtre le tableau pour garder que les lettres uniques
-char* filtrage_alphabet(char *tab, int taille, int *nb_element) {
-	char *filtreTab = calloc(taille, sizeof(char));
-
-	int index = 0;
-
-	for (int i = 0; i < taille; i++) {
-		if (!dejaPresent(tab[i], filtreTab, index)) {
-			filtreTab[index] = tab[i];
-			index++;
-		}
-	}
-
-	// On redimensionne le tableau
-	filtreTab = realloc(filtreTab, index * sizeof(char));
-
-	// On met à jour le nombre d'éléments dans le tableau
-    *nb_element = index;
-
-	return filtreTab;
-}
-
 // Structure pour une liste chaînée d'états
 struct listeChainee {
-	int clé;
+	int cle;
 	int size;
 	unsigned int *etat;
     struct listeChainee *suiv;
@@ -258,7 +240,7 @@ void ajouter_etat(struct listeChainee *liste, unsigned int *ens, int taille) {
 
 	// On créee un nouvel élément
 	struct listeChainee *nouveau = malloc(sizeof(struct listeChainee));
-	nouveau->clé = curr->clé + 1;
+	nouveau->cle = curr->cle + 1;
 	nouveau->size = taille;
 	nouveau->etat = malloc(taille * sizeof(unsigned int));
 
@@ -284,7 +266,6 @@ void liberer_chaine(struct listeChainee *chaine) {
         free(tmp);
     }
 	free(chaine);
-	free(tmp);
 }
 
 // Fonction recherchant la clé d'un ensemble d'états dans une liste chaînée (si l'ensemble d'états n'est pas présent, on renvoie la clé précédente + 1)
@@ -306,10 +287,10 @@ int recherche_cle(struct listeChainee *liste, unsigned int *ens, int taille_ens)
 			}
 			// Si on a trouvé l'ensemble d'états dans la liste
 			if (cpt == taille_ens) {
-				return curr->clé;
+				return curr->cle;
 			}	
 		}
-		sauv = curr->clé;
+		sauv = curr->cle;
 		curr = curr->suiv;
 	}
 	free(curr);
@@ -333,7 +314,9 @@ int transition_presente (AUTOMATE A, unsigned int p, char a, unsigned int q) {
 }
 
 // Recherche les transitions non epsilon pour avoir la transition (q1,a,q3) si elle n'existe pas déjà avec a != epsilon
-void recherche_transition_non_epsilon (AUTOMATE A, unsigned int q1, unsigned int q2) {
+void recherche_transition_non_epsilon (AUTOMATE A, unsigned int q1, unsigned int q2) { 
+//! renvoyer un automate avec les transitions ajoutées puis une fois de retour dans la méthode supprime_epsilon_transitions, 
+//! on ajoute les transtions non epsilon de A dans l'automate retourné ?
 
 	// On va parcourir les transitions de A
 	struct transition *parcours = A.T;
@@ -342,19 +325,20 @@ void recherche_transition_non_epsilon (AUTOMATE A, unsigned int q1, unsigned int
 		// Si on trouve la transition (q1,a,q2) avec a != epsilon
 		if (parcours->p == q2 && parcours->a != 0) {
 
-			// On vérifie si la transition n'existe pas déjà
+			// On vérifie que la transition n'est pas dèjà présente
 			if (!transition_presente(A, q1, parcours->a, parcours->q)) {
-				A = ajoute_une_transition(A, q1, parcours->a, parcours->q);
-				//printf("				Ajout (%d,%c,%d)\n", q1, affcar(parcours->a), parcours->q);
 
-				// On regarde si q2 est un état final pour modifier q1 si besoin
-				if (A.F[q2]) {
-					etat_final_ON(A, q1);
-				}
+				A = ajoute_une_transition(A, q1, parcours->a, parcours->q); //! bizarrement il ne me compte pas les transitions ajoutées
+				//printf("			Ajout (%d,%c,%d)\n", q1, affcar(parcours->a), parcours->q);
 			}
 
+			// On regarde si q2 est un état final pour modifier q1 si besoin
+			if (A.F[q2]) {
+				etat_final_ON(A, q1);
+			}
 		} else if (parcours->p == q2 && parcours->a == 0) {
 			recherche_transition_non_epsilon(A, q1, parcours->q);
+			//printf("			Recherche (%d,%c,%d)\n", q1, affcar(parcours->a), parcours->q);
 		}
 		// Sinon on passe à la transition suivante
 		parcours = parcours->suiv;
@@ -397,6 +381,8 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 
 				recherche_transition_non_epsilon(A, q1, q2);
 
+				//A.nb_trans = cpt_trans;
+
 			}
 			A_t = A_t->suiv;
 		}
@@ -408,16 +394,18 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 	struct transition *prev = NULL;
 	int cpt = 0;
 	while (supp_e) {
+
 		// Cas: c'est une transition epsilon
 		if (supp_e->a == 0) {
 			// On prend la transition suivante
 			struct transition *next = supp_e->suiv;
 			// On libère la mémoire de la transition epsilon
 			free(supp_e);
-			// On met à jour les pointeurs
+
 			// Cas: c'est la première transition
 			if (prev == NULL) {
 				A.T = next; 
+
 			// Cas: ce n'est pas la première transition
 			} else {
 				prev->suiv = next;
@@ -426,6 +414,7 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 			supp_e = next;
 			// On décrémente le nombre de transitions
 			A.nb_trans--;
+
 		// Cas: ce n'est pas une transition epsilon
 		} else { // On passe simplement à la transition suivante
 			prev = supp_e;
@@ -433,11 +422,10 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 			cpt++;
 		}
 	}
-
-	// On met à jour le nombre de transitions car dans la méthode recherche_transition_non_epsilon, on a ajouté des transitions mais le nombre de transitions n'a pas été mis à jour
-	A.nb_trans = cpt;
-	
 	free(supp_e);
+
+	A.nb_trans = cpt; // On met à jour le nombre de transitions car dans la méthode recherche_transition_non_epsilon, les transitions ajoutées ne sont pas comptées
+
 	return A;
 }
 
@@ -448,23 +436,32 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 AUTOMATE determinise (AUTOMATE A) {
 
 	// On va récupérer l'alphabet de l'automate
-	int index = 0;
-	char *tab = calloc(26, sizeof(char));
+	int alphabet_size = 0;
+	char *alphabet = calloc(26, sizeof(char));
 	struct transition *auto_A = A.T;
 
 	while (auto_A) {
-		// On ajoute la lettre de la transition dans le tableau
-		tab[index] = auto_A->a;
-		index++;
+		
+		// On vérifie que la lettre n'est pas déjà présente dans le tableau
+		if (!dejaPresent(auto_A->a, alphabet, alphabet_size)) {
+			// On ajoute la lettre de la transition dans le tableau
+			alphabet[alphabet_size] = auto_A->a;
+			alphabet_size++;
+		}
+		
 		// On passe à la transition suivante
 		auto_A = auto_A->suiv;
 	}
+	free(auto_A);
 
-	// On va filtrer le tableau pour ne garder que les lettres uniques
-	int alphabet_size;
-	char *alphabet = filtrage_alphabet(tab, index, &alphabet_size);
+	alphabet = realloc(alphabet, alphabet_size * sizeof(char));
 
-	free(tab);
+	// Affichage de l'alphabet
+	printf("Alphabet: ");
+	for (int i = 0; i < alphabet_size; i++) {
+		printf("%c ", alphabet[i]);
+	}
+	printf("\n");
 
 	// On initialise un index pour la clé
 	int index_cle = 0;
@@ -473,7 +470,7 @@ AUTOMATE determinise (AUTOMATE A) {
 	struct listeChainee *a_traiter = malloc(sizeof(struct listeChainee));
 	a_traiter->etat = malloc(sizeof(unsigned int));
 	a_traiter->etat[0] = 0;
-	a_traiter->clé = index_cle;
+	a_traiter->cle = index_cle;
 	a_traiter->suiv = NULL;
 	a_traiter->size = 1;
 
@@ -481,7 +478,7 @@ AUTOMATE determinise (AUTOMATE A) {
 	struct listeChainee *ARCHIVES = malloc(sizeof(struct listeChainee));
 	ARCHIVES->etat = malloc(sizeof(unsigned int));
 	ARCHIVES->etat[0] = 0;
-	ARCHIVES->clé = index_cle;
+	ARCHIVES->cle = index_cle;
 	ARCHIVES->suiv = NULL;
 	ARCHIVES->size = 1;
 
@@ -497,7 +494,7 @@ AUTOMATE determinise (AUTOMATE A) {
 		// On récupère les informations de l'ensemble d'états courant
 		unsigned int *curr_ens = a_traiter->etat;
 		int curr_ens_size = a_traiter->size;
-		int curr_clé = a_traiter->clé;
+		int curr_clé = a_traiter->cle;
 
 		// Pour chaque lettre de l'alphabet
 		for (int i = 0; i < alphabet_size; i++) {
@@ -664,7 +661,7 @@ int reconnait (AUTOMATE A, char *mot) {
 				// On regarde si on veut reconnaître le mot vide, on adapte le message en fonction
 				if (strlen(mot) == 0) printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
 				else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
-				return retour;
+				return 0;
 			}
 		}
 		recherche_mot++;
