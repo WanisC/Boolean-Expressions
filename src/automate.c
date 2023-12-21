@@ -607,10 +607,13 @@ AUTOMATE determinise (AUTOMATE A) {
 		a_traiter = a_traiter->suiv;
 	}
 
+	// On libère la mémoire
+	liberer_chaine(a_traiter);
+
 	// Transformation de l'automate déterminisé en AFD complet
 	A_determinise.N++;
 	unsigned int poubelle = A_determinise.N - 1;
-	A_determinise.F[poubelle] = 0; // L'état poubelle n'est pas final
+	etat_final_OFF(A_determinise, poubelle); // L'état poubelle n'est pas final
 
 	// Pour chaque état de A_determinise
 	for (unsigned int q_depart = 0; q_depart < A_determinise.N; q_depart++) {
@@ -642,9 +645,6 @@ AUTOMATE determinise (AUTOMATE A) {
 
 		}
 	}
-	
-	// On libère la mémoire de la liste chaînée / des tableaux d'alphabet
-	liberer_chaine(a_traiter);
 	free(alphabet);
 
 	return A_determinise;
@@ -665,35 +665,38 @@ AUTOMATE minimise (AUTOMATE A) {
 // Renvoie vrai si le mot mot est reconnu par l'automate A
 int reconnait (AUTOMATE A, char *mot) {
 	int retour = 0;
-	unsigned int curr_etat = 0; // Pointeur pour sauvegarder l'état courant
-	char *recherche_mot = mot;
+	unsigned int pos = 0; // Pointeur pour sauvegarder notre position dans l'automate
+
+	int index = 0; // Index pour parcourir le mot
+	int mot_size = strlen(mot);
 
 	// Tant qu'il reste des lettres dans le mot
-	while (recherche_mot[0]) { 
+	while (index < mot_size) {
+		char lettre = mot[index];
 		struct transition *t = A.T;
 
-		// Recherche de la transition (curr_etat, mot[0], q)
+		// Recherche de la transition (pos, mot[0], q)
 		while (t) {
 
-			// Si on trouve la transition (curr_etat, mot[0], q)
-			if (t->p == curr_etat && t->a == recherche_mot[0]) {
-				curr_etat = t->q;
+			// Si on trouve la transition (pos, mot[0], q)
+			if (t->p == pos && t->a == lettre) {
+				pos = t->q;
 				break;
 			}
 			t = t->suiv;
 
 			// On vérifie si on se trouve sur l'état poubelle
-			if (curr_etat == A.N - 1) {
+			if (pos == A.N - 1) {
 				// On regarde si on veut reconnaître le mot vide, on adapte le message en fonction
 				if (strlen(mot) == 0) printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
 				else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
 				return 0;
 			}
 		}
-		recherche_mot++;
+		index++;
 	}
 
-	retour = A.F[curr_etat]; // Si l'état dans lequel est final alors le mot est reconnu, sinon non
+	retour = A.F[pos]; // Si l'état dans lequel est final alors le mot est reconnu, sinon non
 	if (retour) {
 		if (strlen(mot) == 0) printf("Le mot vide EST RECONNU PAR %s\n", A.nom);
 		else printf("%s EST RECONNU PAR %s\n", mot, A.nom);
