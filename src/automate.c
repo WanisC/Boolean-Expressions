@@ -693,6 +693,17 @@ AUTOMATE minimise (AUTOMATE A) {
 // Renvoie vrai si le mot mot est reconnu par l'automate A
 int reconnait (AUTOMATE A, char *mot) {
 	int retour = 0;
+	char* mot_vide = "E";
+
+	// On regarde d'abord si on veut reconnaître le mot vide (epsilon)
+	if (mot == mot_vide && A.F[0]) {
+		printf("Le mot vide EST RECONNU PAR %s\n", A.nom);
+		return 1;
+	} else if (mot == mot_vide && !A.F[0]) {
+		printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
+		return 0;
+	}
+	
 	unsigned int pos = 0; // Pointeur pour sauvegarder notre position dans l'automate
 
 	int index = 0; // Index pour parcourir le mot
