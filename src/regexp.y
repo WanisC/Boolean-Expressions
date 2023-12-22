@@ -4,39 +4,66 @@
 #include <string.h>
 
 #if YYBISON
-int yylex();
-int yyerror();
+    int yylex();
+    int yyerror();
 #endif 
 char* concatenerChaines(const char** chaines, int nombreDeChaines);
 char* itc(int entier );
 int cpt = 0;
 %}
 
+/* https://cs.wmich.edu/~yang/teach/cs485/yacc.pdf */ 
+
 %union{
-char* str;
+    char* str;
 }
 
-%token <str> LETTRE EPSILON VIDE MOT
-%left <str> UNION
-%left <str>CONCAT  
-%token <str>ETOILE
-%token <str>PAR_O PAR_F
-%type <str> expression 
-%type <str> sortie
+%token  <str> LETTRE EPSILON VIDE MOT NEWLINE
+%left   <str> UNION
+%left   <str> CONCAT  
+%token  <str> ETOILE
+%token  <str> PAR_O PAR_F
+%type   <str> expression 
+%type   <str> mots
+%type   <str> sortie
+
 %%
+
 sortie : 
-        expression  {printf("%s \ncpt d'op = %s\n",$1,itc(cpt));}
+        expression NEWLINE mots {
+                            printf("#include <stdio.h>\n#include <stdlib.h>\n#include \"automate.h\"\n\nint main() {\n%s\nreturn 0;\n}\n", $1); 
+                            printf("%s\n", $3);
+                            printf("cpt d'op = %d\n", cpt);
+                                }
     ;
 
 expression : 
-        expression CONCAT expression    {const char* listeChaines[] = {$1,$3,"A",itc(cpt),"= concat_automate(A",itc(cpt-2),",A",itc(cpt-1),");\n"};   $$ = concatenerChaines(listeChaines,9);cpt ++;}
-    |   expression UNION expression     {const char* listeChaines[] = {$1,$3,"A",itc(cpt),"= union_automate(A",itc(cpt-2),",A",itc(cpt-1),");\n"};    $$ = concatenerChaines(listeChaines,9);cpt ++;}
-    |   expression ETOILE               {const char* listeChaines[] = {$1,"A",itc(cpt),"= etoile_automate(A",itc(cpt-1),");\n"};                        $$ = concatenerChaines(listeChaines,6);cpt ++;}
-    |   PAR_O expression PAR_F          {$$ =$2; }
-    |   LETTRE                          {const char* listeChaines[] = {"A",itc(cpt),"= creer_automate_une_lettre(",$1,");\n"};                            $$ = concatenerChaines(listeChaines,5);cpt ++;}
-    |   MOT                             {printf("%s",$1); const char* listeChaines[] = { "reconnaitre(",$1,");\n"};                            $$ = concatenerChaines(listeChaines,3);cpt ++;}
-    |   EPSILON                         {const char* listeChaines[] = {"A",itc(cpt),"= creer_automate_une_lettre(E);\n"};                                 $$ = concatenerChaines(listeChaines,3);cpt ++;}
-    |   VIDE                            {const char* listeChaines[] = {"A",itc(cpt),"= creer_automate(0,1);\n"};                                          $$ = concatenerChaines(listeChaines,3);cpt ++;}
+        expression CONCAT expression  { const char* listeChaines[] = { $1, $3, "AUTOMATE A", itc(cpt), " = concat_automate(A", itc(cpt-2), ", A", itc(cpt-1), ");\n" };        
+                                        $$ = concatenerChaines(listeChaines, 9); cpt ++; }
+
+    |   expression UNION expression   { const char* listeChaines[] = { $1, $3, "AUTOMATE A", itc(cpt), " = union_automate(A", itc(cpt-2), ", A", itc(cpt-1), ");\n" };         
+                                        $$ = concatenerChaines(listeChaines, 9); cpt ++; }
+
+    |   expression ETOILE             { const char* listeChaines[] = { $1, "AUTOMATE A", itc(cpt), " = etoile_automate(A", itc(cpt-1), ");\n" };                               
+                                        $$ = concatenerChaines(listeChaines, 6); cpt ++; }
+
+    |   PAR_O expression PAR_F        { $$ = $2; }
+
+    |   LETTRE                        { const char* listeChaines[] = { "AUTOMATE A", itc(cpt), " = creer_automate_une_lettre(" , $1, ");\n" };                                 
+                                        $$ = concatenerChaines(listeChaines, 5); cpt ++; }
+
+    |   EPSILON                       { const char* listeChaines[] = { "AUTOMATE A", itc(cpt), " = creer_automate('Epsilon', 1);\n", "ETAT_FINAL_ON(A", itc(cpt), ", 0);\n" }; 
+                                        $$ = concatenerChaines(listeChaines, 6); cpt ++; }
+
+    |   VIDE                          { const char* listeChaines[] = { "AUTOMATE A", itc(cpt), " = creer_automate('Vide', 1);\n" };                                            
+                                        $$ = concatenerChaines(listeChaines, 3); cpt ++; }
+    ;
+
+mots :
+        MOT NEWLINE                   { const char* listeChaines[] = { "reconnait(A_determinise, ", $1, ");\n" };                                            
+                                        $$ = concatenerChaines(listeChaines, 3); }
+    |   EPSILON NEWLINE               { const char* listeChaines[] = { "reconnait(A_determinise, ", $1, ");\n" };                                            
+                                            $$ = concatenerChaines(listeChaines, 3); }
     ;
 %%
 
@@ -85,4 +112,9 @@ char* itc(int entier ) {
     sprintf(chaine, "%d", entier);
 
     return chaine;
+}
+
+int main() {
+    yyparse();
+    return 0;
 }
