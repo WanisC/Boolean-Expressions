@@ -54,6 +54,7 @@ exetest: regexp
 regexp.yy.c: regexp.l
 	flex  -o $@ $^
 
+# Pour mettre à jour les packages
 update_upgrade:
 	sudo apt update
 	sudo apt upgrade
@@ -61,12 +62,13 @@ update_upgrade:
 install:
 	sudo apt-get install -y libbison-dev
 
+# Installer valgrind pour les fuites mémoires
 install_valgrind:
 	sudo apt install valgrind
 
+# Installer gdb
 install_gdb:
 	sudo apt install gdb
-
 
 clean:
 	rm -f main
