@@ -360,7 +360,7 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 		//printf("	Parcours des transitions de A\n");
 		while (A_t) {
 
-			// Nous allons distinguer 2 cas:
+			// Nous allons distinguer 3 cas:
 
 				// Cas 1: la transition a pour état de départ q1 et la lettre est epsilon
 				// Cas 2: la transition a pour état de départ q1 et la lettre n'est pas epsilon
@@ -375,12 +375,11 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 
 				// On doit rechercher maintenant les transitions non-epsilon que l'on va ajouter à A pour l'état q1
 				
-				unsigned int q2 = A_t->q; // On initialise l'état q2 que l'on va actualiser dans le cas d'une transition epsilon
+				// On initialise l'état q2 que l'on va actualiser dans le cas d'une transition epsilon
+				unsigned int q2 = A_t->q; 
 				//printf("		q2: %d\n", q2);
 
 				recherche_transition_non_epsilon(A, q1, q2);
-
-				//A.nb_trans = cpt_trans;
 
 			}
 			A_t = A_t->suiv;
@@ -391,6 +390,7 @@ AUTOMATE supprime_epsilon_transitions (AUTOMATE A) {
 	// On va parcourir les transitions de A pour trouver les transitions epsilon et les supprimer
 	struct transition *supp_e = A.T;
 	struct transition *prev = NULL;
+	// On va compter le nombre de transitions non epsilon
 	int cpt = 0;
 	while (supp_e) {
 
@@ -439,7 +439,7 @@ AUTOMATE determinise (AUTOMATE A) {
 	char *alphabet = calloc(26, sizeof(char));
 
 	// On doit tester la valeur de retour de calloc
-	if (alphabet == NULL) {
+	if (!alphabet) {
 		printf("Erreur lors de l'allocation mémoire: alphabet\n");
 		exit(1);
 	}
@@ -463,7 +463,7 @@ AUTOMATE determinise (AUTOMATE A) {
 	alphabet = realloc(alphabet, alphabet_size * sizeof(char));
 
 	// On doit tester la valeur de retour de realloc
-	if (alphabet == NULL) {
+	if (!alphabet) {
 		printf("Erreur lors de l'allocation mémoire: alphabet\n");
 		exit(1);
 	}
@@ -475,7 +475,7 @@ AUTOMATE determinise (AUTOMATE A) {
 	struct listeChainee *a_traiter = malloc(sizeof(struct listeChainee));
 
 	// On doit tester la valeur de retour de malloc
-	if (a_traiter == NULL) {
+	if (!a_traiter) {
 		printf("Erreur lors de l'allocation mémoire: a_traiter\n");
 		exit(1);
 	}
@@ -483,7 +483,7 @@ AUTOMATE determinise (AUTOMATE A) {
 	a_traiter->etat = malloc(sizeof(unsigned int));
 
 	// On doit tester la valeur de retour de malloc
-	if (a_traiter->etat == NULL) {
+	if (!a_traiter->etat) {
 		printf("Erreur lors de l'allocation mémoire: a_traiter->etat\n");
 		exit(1);
 	}
@@ -497,7 +497,7 @@ AUTOMATE determinise (AUTOMATE A) {
 	struct listeChainee *ARCHIVES = malloc(sizeof(struct listeChainee));
 
 	// On doit tester la valeur de retour de malloc
-	if (ARCHIVES == NULL) {
+	if (!ARCHIVES) {
 		printf("Erreur lors de l'allocation mémoire: ARCHIVES\n");
 		exit(1);
 	}
@@ -505,7 +505,7 @@ AUTOMATE determinise (AUTOMATE A) {
 	ARCHIVES->etat = malloc(sizeof(unsigned int));
 
 	// On doit tester la valeur de retour de malloc
-	if (ARCHIVES->etat == NULL) {
+	if (!ARCHIVES->etat) {
 		printf("Erreur lors de l'allocation mémoire: ARCHIVES->etat\n");
 		exit(1);
 	}
@@ -535,11 +535,10 @@ AUTOMATE determinise (AUTOMATE A) {
 			char curr_letter = alphabet[i]; // Lettre courante
 
 			// On va créer le tableau des successeurs trié de l'ensemble d'états courant avec la lettre courante en sauvegardant sa taille
-			int taille_successeurs;
 			unsigned int *successeurs = malloc(A.N * sizeof(unsigned int));
 
 			// On doit tester la valeur de retour de malloc
-			if (successeurs == NULL) {
+			if (!successeurs) {
 				printf("Erreur lors de l'allocation mémoire: successeurs\n");
 				exit(1);
 			}
@@ -567,14 +566,15 @@ AUTOMATE determinise (AUTOMATE A) {
 				}
 			}
 
-			// On redimensionne le tableau
+			// On redimensionne le tableau (plus précisement on réduit l'espace mémoire alloué)
 			successeurs = realloc(successeurs, index * sizeof(unsigned int));
 			
-			// On met à jour le nombre d'éléments dans le tableau
+			// On sauvgarde le nombre d'éléments dans le tableau
+			int taille_successeurs;
 			taille_successeurs = index;
+
 			// On va trier dans l'ordre croissant le tableau
 			triBulles(successeurs, taille_successeurs);
-
 
 			// On va regarder si notre tableau d'états successeurs n'est pas vide
 			if (taille_successeurs != 0) {
@@ -628,6 +628,16 @@ AUTOMATE determinise (AUTOMATE A) {
 	// Transformation de l'automate déterminisé en AFD complet
 	A_determinise.N++;
 	unsigned int poubelle = A_determinise.N - 1;
+
+	// Comme nous allons ajouter un état poubelle, on doit modifier la taille de l'allocation mémoire de A_determinise.F
+	A.F = realloc(A.F, A_determinise.N * sizeof(int));
+
+	// On doit tester la valeur de retour de realloc
+	if (!A.F) {
+		printf("Erreur lors de l'allocation mémoire: A.F\n");
+		exit(1);
+	}
+
 	etat_final_OFF(A_determinise, poubelle); // L'état poubelle n'est pas final
 
 	// Pour chaque état de A_determinise
@@ -660,6 +670,9 @@ AUTOMATE determinise (AUTOMATE A) {
 
 		}
 	}
+
+	// On libère la mémoire de la liste chaînée / de l'alphabet
+	liberer_chaine(a_traiter);
 	free(alphabet);
 
 	return A_determinise;
@@ -705,7 +718,7 @@ int reconnait (AUTOMATE A, char *mot) {
 				// On regarde si on veut reconnaître le mot vide, on adapte le message en fonction
 				if (strlen(mot) == 0) printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
 				else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
-				return 0;
+				return retour;
 			}
 		}
 		index++;
