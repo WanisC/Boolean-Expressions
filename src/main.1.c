@@ -12,8 +12,8 @@ int main () {
     // A4 = creer_automate_une_lettre('c');
     // A5 = concat_automate(A3, A4);
 
-    // A_final = supprime_epsilon_transitions (A5);
-    // A_final = determinise(A_final);
+    // A_sans_epsilon = supprime_epsilon_transitions (A5);
+    // A_determinise = determinise(A_sans_epsilon);
 
 
     // Automate pour tester la méthode de déterminisation
@@ -23,8 +23,8 @@ int main () {
     // A3 = creer_automate_une_lettre('a');
     // A4 = union_automate(A2, A3);
 
-    // A_final = supprime_epsilon_transitions (A4);
-    // A_final = determinise(A_final);
+    // A_sans_epsilon = supprime_epsilon_transitions (A4);
+    // A_determinise = determinise(A_sans_epsilon);
     
     A0 = creer_automate_une_lettre('a');
     A1 = creer_automate_une_lettre('b');
