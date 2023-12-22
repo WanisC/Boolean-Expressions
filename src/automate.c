@@ -721,6 +721,14 @@ int reconnait (AUTOMATE A, char *mot) {
 				return retour;
 			}
 		}
+		
+		// Si on arrive ici, c'est que la transition (pos, mot[0], q) n'existe pas
+		if (!t) {
+			// On regarde si on veut reconnaître le mot vide, on adapte le message en fonction
+			if (strlen(mot) == 0) printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
+			else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
+			return retour;
+		}
 		index++;
 	}
 
