@@ -23,7 +23,7 @@ char* code;
     
 }
 
-%token  <str> LETTRE EPSILON VIDE MOT NEWLINE
+%token  <str> LETTRE EPSILON VIDE MOT NEWLINE 
 %left   <op> UNION
 %left   <op> CONCAT  
 %token  <op> ETOILE
@@ -64,15 +64,15 @@ expression :
     ;
 
 mots :
-        mots NEWLINE mots                  { ;const char* listeChaines[] = {  $1,$3 };                                            
+        mots NEWLINE mots                  {const char* listeChaines[] = {  $1,$3 };                                            
                                         $$ = concatenerChaines(listeChaines, 2); }
     |   MOT               { const char* listeChaines[] = { "reconnait(A_final, ", $1, ");\n" };                                            
                                             $$ = concatenerChaines(listeChaines, 3); }
     |   LETTRE               { const char* listeChaines[] = { "reconnait(A_final, ", $1, ");\n" };                                            
                                             $$ = concatenerChaines(listeChaines, 3); }
     |   EPSILON               { $$ = "reconnait(A_final, \"E\");\n" ; }
-    |   EPSILON               { $$ = "reconnait(A_final, \"O\");\n" ; }
-    |   
+    |   VIDE               { $$ = "reconnait(A_final, \"O\");\n" ; }
+    |   NEWLINE {$$="";}
 
     ;
 %%
