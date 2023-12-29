@@ -8,7 +8,7 @@
 //###
 AUTOMATE etat_final_ON    (AUTOMATE A, unsigned int p) {if (p>=A.N) exit (41); A.F[p] = 1; return A;}
 AUTOMATE etat_final_OFF   (AUTOMATE A, unsigned int p) {if (p>=A.N) exit (42); A.F[p] = 0; return A;}
-AUTOMATE etat_fina_TOGGLE (AUTOMATE A, unsigned int p) {if (p>=A.N) exit (43); A.F[p] = 1-A.F[p]; return A;}
+AUTOMATE etat_final_TOGGLE (AUTOMATE A, unsigned int p) {if (p>=A.N) exit (43); A.F[p] = 1-A.F[p]; return A;}
 
 
 //###
@@ -460,11 +460,16 @@ AUTOMATE determinise (AUTOMATE A) {
 	}
 	free(auto_A);
 
+	// Si l'alphabet est vide nous sommes dans le cas d'un automate sans transition, dans ce cas on renvoie l'automate A
+	if (alphabet_size == 0) {
+		return A;
+	}
+
 	alphabet = realloc(alphabet, alphabet_size * sizeof(char));
 
 	// On doit tester la valeur de retour de realloc
 	if (!alphabet) {
-		printf("Erreur lors de l'allocation mémoire: alphabet\n");
+		printf("Erreur lors de la reallocation mémoire: alphabet\n");
 		exit(1);
 	}
 
@@ -693,15 +698,13 @@ AUTOMATE minimise (AUTOMATE A) {
 // Renvoie vrai si le mot mot est reconnu par l'automate A
 int reconnait (AUTOMATE A, char *mot) {
 	int retour = 0;
-	char* mot_vide = "E";
 
 	// On regarde d'abord si on veut reconnaître le mot vide (epsilon)
-	if (mot == mot_vide && A.F[0]) {
-		printf("Le mot vide EST RECONNU PAR %s\n", A.nom);
-		return 1;
-	} else if (mot == mot_vide && !A.F[0]) {
-		printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
-		return 0;
+	if (strcmp(mot, "E") == 0) {
+		retour = A.F[0];
+		if (retour) printf("%s EST RECONNU PAR %s\n", mot, A.nom);
+		else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
+		return retour;
 	}
 	
 	unsigned int pos = 0; // Pointeur pour sauvegarder notre position dans l'automate
@@ -727,8 +730,7 @@ int reconnait (AUTOMATE A, char *mot) {
 			// On vérifie si on se trouve sur l'état poubelle
 			if (pos == A.N - 1) {
 				// On regarde si on veut reconnaître le mot vide, on adapte le message en fonction
-				if (strlen(mot) == 0) printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
-				else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
+				printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
 				return retour;
 			}
 		}
@@ -736,8 +738,7 @@ int reconnait (AUTOMATE A, char *mot) {
 		// Si on arrive ici, c'est que la transition (pos, mot[0], q) n'existe pas
 		if (!t) {
 			// On regarde si on veut reconnaître le mot vide, on adapte le message en fonction
-			if (strlen(mot) == 0) printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
-			else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
+			printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
 			return retour;
 		}
 		index++;
@@ -745,12 +746,10 @@ int reconnait (AUTOMATE A, char *mot) {
 
 	retour = A.F[pos]; // Si l'état dans lequel est final alors le mot est reconnu, sinon non
 	if (retour) {
-		if (strlen(mot) == 0) printf("Le mot vide EST RECONNU PAR %s\n", A.nom);
-		else printf("%s EST RECONNU PAR %s\n", mot, A.nom);
+		printf("%s EST RECONNU PAR %s\n", mot, A.nom);
 		
 	} else {
-		if (strlen(mot) == 0) printf("Le mot vide N'est PAS reconnu par %s\n", A.nom);
-		else printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
+		printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
 	}
 	return retour;
 }
