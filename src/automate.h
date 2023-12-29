@@ -1,3 +1,4 @@
+#include <stdlib.h>
 //
 // Structures de données pour stocker des automates
 // Fonctions sur les automates
@@ -28,6 +29,10 @@ struct automate {
 	};
 typedef struct automate AUTOMATE;
 
+// Changement du statut d'un état
+AUTOMATE etat_final_ON(AUTOMATE A, unsigned int p);
+AUTOMATE etat_final_OFF   (AUTOMATE A, unsigned int p);
+AUTOMATE etat_final_TOGGLE (AUTOMATE A, unsigned int p);
 
 // Affiche l'utomate A
 void afficher (AUTOMATE A);
