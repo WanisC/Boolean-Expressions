@@ -5,12 +5,15 @@ run: main
 
 main: automate.o main.o
 	gcc -Wall -o main automate.o main.o
+	clear
 
 automate.o: automate.c automate.h
 	gcc -c -Wall automate.c
+	clear
 
 main.o: main.c automate.h
 	gcc -c -Wall main.c
+	clear
 
 main.c: regexp
 	./regexp < test.1
@@ -84,6 +87,10 @@ clean:
 	rm -rf ${LADIR}
 	rm -f ${LADIR}.zip
 	ls -als
+
+reset:
+	make clean
+	clear
 
 LADIR="IN520_Projet"
 zip:
