@@ -36,8 +36,7 @@ char* code;
 
 sortie : 
         expression NEWLINE mots { 
-                            printf("#include <stdio.h>\n#include <stdlib.h>\n#include \"automate.h\"\n\nint main() {\n%s;\nAUTOMATE A_final, A_sans_epsilon, A_determinise;\n%s\nA_sans_epsilon = supprime_epsilon_transitions(A%d);\nA_determinise = determinise(A_sans_epsilon);\nA_final = minimise(A_determinise);\nafficher(A_final); \n\nreturn 0;\n}\n",genererChainesAutomates(cpt-1), code, cpt-1); 
-                            printf("%s\n",$3 );
+                            printf("#include <stdio.h>\n#include <stdlib.h>\n#include \"automate.h\"\n\nint main() {\n%s;\nAUTOMATE A_final, A_sans_epsilon, A_determinise;\n%s\nA_sans_epsilon = supprime_epsilon_transitions(A%d);\nA_determinise = determinise(A_sans_epsilon);\nA_final = minimise(A_determinise);\n\nafficher(A_final); \n\n%s\n\nreturn 0;\n}\n",genererChainesAutomates(cpt-1), code, cpt-1, $3); 
                                 }
     ;
 
@@ -64,15 +63,18 @@ expression :
     ;
 
 mots :
-        mots NEWLINE mots                  {const char* listeChaines[] = {  $1,$3 };                                            
+        mots NEWLINE mots             { const char* listeChaines[] = { $1, $3 };                                            
                                         $$ = concatenerChaines(listeChaines, 2); }
-    |   MOT               { const char* listeChaines[] = { "reconnait(A_final, ", $1, ");\n" };                                            
-                                            $$ = concatenerChaines(listeChaines, 3); }
-    |   LETTRE               { const char* listeChaines[] = { "reconnait(A_final, ", $1, ");\n" };                                            
-                                            $$ = concatenerChaines(listeChaines, 3); }
-    |   EPSILON               { $$ = "reconnait(A_final, \"E\");\n" ; }
-    |   VIDE               { $$ = "reconnait(A_final, \"O\");\n" ; }
-    |   NEWLINE {$$="";}
+
+    |   MOT                           { const char* listeChaines[] = { "reconnait(A_final, \"", $1, "\");\n" };                                            
+                                        $$ = concatenerChaines(listeChaines, 3); }
+
+    |   LETTRE                        { const char* listeChaines[] = { "reconnait(A_final, \"", $1, "\");\n" };                                            
+                                        $$ = concatenerChaines(listeChaines, 3); }
+
+    |   EPSILON                       { $$ = "reconnait(A_final, \"E\");\n" ; }
+
+    |   NEWLINE                       { $$ = ""; }
 
     ;
 %%

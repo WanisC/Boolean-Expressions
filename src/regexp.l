@@ -15,7 +15,7 @@
 "E"         { printf("E"); yylval.op = 1 ;  return EPSILON; }
 "O"         { printf("0"); yylval.op = 1 ;  return VIDE;    }
 \n          { printf("\n"); return NEWLINE; } /* on aura besoin du saut de lignes pour notre fichier test1 */
-[.\t]     {printf("Caractère inconnu\n"); exit(1);}
+[\.\t ]     { printf("Caractère inconnu\n"); exit(1); }
 %% 
 
 
