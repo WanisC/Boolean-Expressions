@@ -64,10 +64,16 @@ expression :
     ;
 
 mots :
-        MOT NEWLINE                   { const char* listeChaines[] = { "reconnait(A_final,\"" , $1,  "\");\n" };                                            
-                                        $$ = concatenerChaines(listeChaines, 3); }
-    |   EPSILON NEWLINE               { const char* listeChaines[] = { "reconnait(A_final, ", $1, ");\n" };                                            
+        mots NEWLINE mots                  { ;const char* listeChaines[] = {  $1,$3 };                                            
+                                        $$ = concatenerChaines(listeChaines, 2); }
+    |   MOT               { const char* listeChaines[] = { "reconnait(A_final, ", $1, ");\n" };                                            
                                             $$ = concatenerChaines(listeChaines, 3); }
+    |   LETTRE               { const char* listeChaines[] = { "reconnait(A_final, ", $1, ");\n" };                                            
+                                            $$ = concatenerChaines(listeChaines, 3); }
+    |   EPSILON               { $$ = "reconnait(A_final, \"E\");\n" ; }
+    |   EPSILON               { $$ = "reconnait(A_final, \"O\");\n" ; }
+    |   
+
     ;
 %%
 
