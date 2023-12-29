@@ -15,8 +15,6 @@ int autodroit = 0;
 char* code;
 %}
 
-/* https://cs.wmich.edu/~yang/teach/cs485/yacc.pdf */ 
-
 %union{
     unsigned int op;
     char* str;
@@ -40,29 +38,29 @@ sortie :
 
 expression : 
         expression CONCAT expression  { autodroit = cpt -1 - $<op>3; $$=  $<op>1 + $<op>3 + 1;
-                                        const char* listeChaines[] = {code, "A", itc(cpt), " = concat_automate(A", itc(autodroit), ", A", itc(cpt-1), ");\n" };        
+                                        const char* listeChaines[] = { code, "A", itc(cpt), " = concat_automate(A", itc(autodroit), ", A", itc(cpt-1), ");\n" };        
                                         code = concatenerChaines(listeChaines, 8); cpt ++; }
 
     |   expression UNION expression   { autodroit = cpt -1 - $<op>3; $$=  $<op>1 + $<op>3 + 1;
-                                        const char* listeChaines[] = {code, "A", itc(cpt), " = union_automate(A", itc(autodroit), ", A", itc(cpt-1), ");\n" };         
+                                        const char* listeChaines[] = { code, "A", itc(cpt), " = union_automate(A", itc(autodroit), ", A", itc(cpt-1), ");\n" };         
                                         code = concatenerChaines(listeChaines, 8); cpt ++; }
 
     |   expression ETOILE             { $$=  $<op>1  + 1;                                     
-                                        const char* listeChaines[] = {code,  "A", itc(cpt), " = etoile_automate(A", itc(cpt-1), ");\n" };                               
+                                        const char* listeChaines[] = { code,  "A", itc(cpt), " = etoile_automate(A", itc(cpt-1), ");\n" };                               
                                         code = concatenerChaines(listeChaines,6 ); cpt ++; }
 
     |   PAR_O expression PAR_F        { $$ = $2; }
 
     |   LETTRE                        { $<op>$ = 1 ;                                          
-                                        const char* listeChaines[] = {code, "A", itc(cpt), " = creer_automate_une_lettre(\"", $1, "\");\n" };                                 
+                                        const char* listeChaines[] = { code, "A", itc(cpt), " = creer_automate_une_lettre(\'", $1, "\');\n" };                                 
                                         code = concatenerChaines(listeChaines, 6); cpt ++;  }
 
     |   EPSILON                       { $<op>0 = 1 ;                                          
-                                        const char* listeChaines[] = {code, "A", itc(cpt), " = creer_automate('Epsilon', 1);\n", "ETAT_FINAL_ON(A", itc(cpt), ", 0);\n" }; 
+                                        const char* listeChaines[] = { code, "A", itc(cpt), " = creer_automate(\"E\", 1);\n", "etat_final_ON(A", itc(cpt), ", 0);\n" }; 
                                         code = concatenerChaines(listeChaines, 7); cpt ++;  }
 
     |   VIDE                          { $<op>0 = 1 ;                                         
-                                        const char* listeChaines[] = {code, "A", itc(cpt), " = creer_automate('Vide', 1);\n" };                                            
+                                        const char* listeChaines[] = { code, "A", itc(cpt), " = creer_automate(\"V\", 1);\n" };                                            
                                         code = concatenerChaines(listeChaines, 4); cpt ++;  }
     ;
 
@@ -164,7 +162,23 @@ int genere_main(int cpt, char* code, char* reconnaissance) {
         return 1;
     }
 
-    fprintf(file, "#include <stdio.h>\n#include <stdlib.h>\n#include \"automate.h\"\n\nint main() {\n%s;\nAUTOMATE A_final, A_sans_epsilon, A_determinise;\n%s\nA_sans_epsilon = supprime_epsilon_transitions(A%d);\nA_determinise = determinise(A_sans_epsilon);\nA_final = minimise(A_determinise);\n\nafficher(A_final); \n\n%s\n\nreturn 0;\n}\n",genererChainesAutomates(cpt-1), code, cpt-1, reconnaissance);
+    fprintf(file, "#include \"automate.h\"\n\n");
+    fprintf(file, "int main() {\n");
+    fprintf(file, genererChainesAutomates(cpt-1));
+    fprintf(file, ";\n");
+    fprintf(file, "AUTOMATE A_final, A_sans_epsilon, A_determinise;\n\n");
+    fprintf(file, code);
+    fprintf(file, "\n");
+    fprintf(file, "A_sans_epsilon = supprime_epsilon_transitions(A%d);", cpt-1);
+    fprintf(file, "\n");
+    fprintf(file, "A_determinise = determinise(A_sans_epsilon);");
+    fprintf(file, "\n");
+    fprintf(file, "A_final = minimise(A_determinise);");
+    fprintf(file, "\n\n");
+    fprintf(file, "afficher(A_final); \n\n");
+    fprintf(file, "%s\n", reconnaissance);
+    fprintf(file, "return 0;\n");
+    fprintf(file, "}\n");
 
     fclose(file);
 
