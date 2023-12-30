@@ -50,9 +50,6 @@ regexp.tab.c: regexp.y
 # -d pour générer le fichier exo01.tab.h
 # -v pour générer le fichier exo01.output
 # -g pour générer le fichier exo01.vcg
-	
-exetest: regexp
-	./$^ < test.1
 
 regexp.yy.c: regexp.l
 	flex  -o $@ $^
