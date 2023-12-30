@@ -5,7 +5,7 @@
 %}
 
 %%
-[a-z]       { printf("%s", yytext);yylval.op = 1; yylval.str = strdup(yytext); return LETTRE;   }
+[a-z]       { printf("%s", yytext); yylval.op = 1; yylval.str = strdup(yytext); return LETTRE;  }
 [a-z]+      { printf("%s", yytext); yylval.str = strdup(yytext); return MOT;                    }
 "+"         { printf("+");  return UNION;                                                       }
 "."         { printf(".");  return CONCAT;                                                      }  
