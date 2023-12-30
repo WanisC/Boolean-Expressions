@@ -76,7 +76,7 @@ mots :
 
     |   EPSILON                       { $$ = "reconnait(A_final, \"E\");\n" ; }
 
-    |   NEWLINE mots                  { $$ = "\n"; }
+    |   NEWLINE mots                  { $$ = $2; }
     ;
 %%
 
