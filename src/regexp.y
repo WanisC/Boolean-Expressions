@@ -21,7 +21,7 @@ char* code;
     
 }
 
-%token  <str> LETTRE EPSILON VIDE MOT NEWLINE 
+%token  <str> LETTRE EPSILON VIDE MOT NEWLINE
 %left   <op> UNION
 %left   <op> CONCAT  
 %token  <op> ETOILE
@@ -61,7 +61,7 @@ expression :
 
     |   VIDE                          { $<op>0 = 1 ;                                         
                                         const char* listeChaines[] = { code, "A", itc(cpt), " = creer_automate(\"V\", 1);\n" };                                            
-                                        code = concatenerChaines(listeChaines, 4); cpt ++;  }
+                                        code = concatenerChaines(listeChaines, 4); cpt ++;  }            
     ;
 
 mots :
@@ -76,8 +76,7 @@ mots :
 
     |   EPSILON                       { $$ = "reconnait(A_final, \"E\");\n" ; }
 
-    |   NEWLINE                       { $$ = ""; }
-
+    |   NEWLINE mots                  { $$ = "\n"; }
     ;
 %%
 

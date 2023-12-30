@@ -16,5 +16,5 @@
 "O"         { printf("0"); yylval.op = 1 ;  return VIDE;                                        }    
 \n          { printf("\n"); return NEWLINE;                                                     }
 [ \t]       { /* Ignorer les espaces et les tabulations */                                      }                                 
-.           { printf("Caractère inconnu\n"); exit(1);                                           }
+.           { printf("\nCaractère inconnu\n"); exit(1);                                         }
 %% 
