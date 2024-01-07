@@ -531,7 +531,7 @@ AUTOMATE determinise (AUTOMATE A) {
 		// On récupère les informations de l'ensemble d'états courant
 		unsigned int *curr_ens = a_traiter->etat;
 		int curr_ens_size = a_traiter->size;
-		int curr_clé = a_traiter->cle;
+		int curr_cle = a_traiter->cle;
 
 		// Pour chaque lettre de l'alphabet
 		for (int i = 0; i < alphabet_size; i++) {
@@ -584,10 +584,10 @@ AUTOMATE determinise (AUTOMATE A) {
 			if (taille_successeurs != 0) {
 
 				// On va recherche la bonne clé pour l'ensemble d'états successeurs
-				int clé_succ = recherche_cle(ARCHIVES, successeurs, taille_successeurs);
+				int cle_succ = recherche_cle(ARCHIVES, successeurs, taille_successeurs);
 
 				// Nous insérons l'ensemble d'états successeurs si ce n'est pas déjà fait
-				if (clé_succ == index_cle) {
+				if (cle_succ == index_cle) {
 
 					// On ajoute l'ensemble d'états successeurs à a_traiter->etat
 					ajouter_etat(a_traiter, successeurs, taille_successeurs);
@@ -603,18 +603,18 @@ AUTOMATE determinise (AUTOMATE A) {
 				A_determinise.N = index_cle;
 
 				//printf("		Nombre d'états: %d\n", A_determinise.N);
-				// On ajoute la transition (curr_clé, curr_letter, clé_succ) à A_determinise
-				A_determinise = ajoute_une_transition(A_determinise, curr_clé, curr_letter, clé_succ);
-				//printf("		Transition ajoutée: (%d,%c,%d)\n", curr_clé, affcar(curr_letter), clé_succ);
+				// On ajoute la transition (curr_cle, curr_letter, cle_succ) à A_determinise
+				A_determinise = ajoute_une_transition(A_determinise, curr_cle, curr_letter, cle_succ);
+				//printf("		Transition ajoutée: (%d,%c,%d)\n", curr_cle, affcar(curr_letter), cle_succ);
 
 				// Vérification si l'ensemble d'états successeurs contient un état final
 				for (int k = 0; k < taille_successeurs; k++) {
 
 					// Si on trouve un état final dans l'ensemble d'états successeurs
 					if (A.F[successeurs[k]]) {
-						etat_final_ON(A_determinise, clé_succ);
+						etat_final_ON(A_determinise, cle_succ);
 						break;
-					} else etat_final_OFF(A_determinise, clé_succ);
+					} else etat_final_OFF(A_determinise, cle_succ);
 				}
 			}
 

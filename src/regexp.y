@@ -8,8 +8,9 @@
     int yyerror(); // Fonction de gestion des erreurs
 #endif 
 char* concatenerChaines(const char** chaines, int nombreDeChaines);
-char* itc(int entier );
+char* itc(int entier);
 char* genererChainesAutomates(int x);
+int genere_main(int cpt, char* code, char* reconnaissance);
 int cpt = 0;
 int autodroit = 0;
 char* code;
