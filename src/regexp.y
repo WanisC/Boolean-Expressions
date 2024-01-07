@@ -166,7 +166,7 @@ int genere_main(int cpt, char* code, char* reconnaissance) {
     }
 
     fprintf(file, "#include \"automate.h\"\n\n");
-    fprintf(file, "int main() {\n");
+    fprintf(file, "int main(void) {\n");
     fprintf(file, genererChainesAutomates(cpt-1));
     fprintf(file, ";\n");
     fprintf(file, "AUTOMATE A_final, A_sans_epsilon, A_determinise;\n\n");
