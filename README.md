@@ -16,10 +16,17 @@ The aim of this project is to build an automaton that recognizes a language defi
 * The ε-transition removal and determinization methods are implemented to simplify the construction of the word recognition method.
 
 [DOWNLOAD]
-
 ===
 * make update
 * make install
+====
+
+[CAUTION]
+====
+* Le projet initial est géré avec `cargo` et est structuré en plusieurs modules et fichiers.
+* Pensez à valider régulièrement votre travail avec `git`.
+* Respectez le https://doc.rust-lang.org/1.0.0/style/[guide de style] Rust dans votre code source.
+* Documentez votre code conformément aux recommandations et ajoutez des tests unitaires.
 ====
 
 == Partie I : Analyseur de disque ==
