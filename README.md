@@ -2,14 +2,9 @@
 
 ## Authors
 - Wanis CHOUAIB
+  wanis.chouaib@ens.uvsq.fr
 - Elie KANGA
-## Instructors
-- Franck Quesette
-  franck.quessette@uvsq.fr
-- Pierre COUCHENEY
-  pierre.coucheney@uvsq.fr
-- Yann Strozecki
-  yann.strozecki@uvsq.fr
+  elie.kanga@ens.uvsq.fr
 
 ## Overview
 
@@ -30,3 +25,39 @@ The ε-transition removal and determinization methods are implemented to simplif
 To download and set up the project, follow these steps:
 
 1. Run the following command to update the project:
+   ```bash
+   make update
+   ```
+2. Install the required dependencies using:
+  ```bash
+   make install
+   ```
+
+## Building and Compilation
+
+To compile project, execute the following command:
+```bash
+make run
+```
+This will build the necessary components and execute also the compiled file for the automaton.
+_Note that using make alone works just as well_
+
+## Instructors
+- Franck Quesette
+  franck.quessette@uvsq.fr
+- Pierre COUCHENEY
+  pierre.coucheney@uvsq.fr
+- Yann Strozecki
+  yann.strozecki@uvsq.fr
+
+For any inquiries, please contact the respective authors via their provided email addresses. 
+
+## Version
+
+Current version: v2023-2024
+
+## Additional Information
+
+* Langage: C
+* Teaching unit: Language Theory
+* University: UVSQ-Versailles
