@@ -1,4 +1,4 @@
-= Boolean expressions evaluation, Wanis CHOUAIB, Elie KANGA 
+Boolean expressions evaluation, Wanis CHOUAIB, Elie KANGA 
 Franck Quesette <franck.quessette@uvsq.fr>, Pierre COUCHENEY <pierre.coucheney@uvsq.fr>, Yann Strozecki <yann.strozecki@uvsq.fr>
 v2023-2024
 :stem:
