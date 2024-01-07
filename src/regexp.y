@@ -4,8 +4,8 @@
 #include <string.h>
 
 #if YYBISON
-    int yylex();
-    int yyerror();
+    int yylex(); // Fonction de l'analyseur lexical
+    int yyerror(); // Fonction de gestion des erreurs
 #endif 
 char* concatenerChaines(const char** chaines, int nombreDeChaines);
 char* itc(int entier );
@@ -17,8 +17,7 @@ char* code;
 
 %union{
     unsigned int op;
-    char* str;
-    
+    char* str;  
 }
 
 %token  <str> LETTRE EPSILON VIDE MOT NEWLINE
@@ -118,7 +117,7 @@ char* concatenerChaines(const char** chaines, int nombreDeChaines) {
     return chaineResultante;
 }
 
-
+// Convertir un entier en chaîne de caractères
 char* itc(int entier) {
     char *chaine = (char *)malloc(100 * sizeof(char));
 
@@ -127,6 +126,7 @@ char* itc(int entier) {
     return chaine;
 }
 
+// Générer la chaîne de caractères "AUTOMATE A0, A1, A2, ..., An;"
 char* genererChainesAutomates(int x) {
     if (x < 0) {
         return NULL; // Gestion du cas où x est négatif
@@ -151,6 +151,7 @@ char* genererChainesAutomates(int x) {
     return chaineResultante;
 }
 
+// Générer le fichier main.c
 int genere_main(int cpt, char* code, char* reconnaissance) {
     FILE *file;
 

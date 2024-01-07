@@ -185,7 +185,6 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 	return C;
 }
 
-
 	//###
 	// Méthodes supplémentaires
 	//###
@@ -469,7 +468,7 @@ AUTOMATE determinise (AUTOMATE A) {
 
 	// On doit tester la valeur de retour de realloc
 	if (!alphabet) {
-		printf("Erreur lors de la reallocation mémoire: alphabet\n");
+		printf("Erreur lors de la réallocation mémoire: alphabet\n");
 		exit(1);
 	}
 
@@ -639,7 +638,7 @@ AUTOMATE determinise (AUTOMATE A) {
 
 	// On doit tester la valeur de retour de realloc
 	if (!A.F) {
-		printf("Erreur lors de l'allocation mémoire: A.F\n");
+		printf("Erreur lors de la réallocation mémoire: A.F\n");
 		exit(1);
 	}
 

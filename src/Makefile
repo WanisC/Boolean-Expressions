@@ -31,10 +31,6 @@ gdb: automate.c main.1.c
 # -g et -ggdb3 pour demander au compilateur de générer des informations de débogage dans le binaire
 	gdb ./gdb_check
 
-exec: automate.c main.1.c
-	gcc automate.c main.1.c -o main
-	./main
-
 # Commenter deux des trois lignes en fonction de l'ordi
 # La deuxième et la troisième est normalement pour les MAC
 # La première pour les autres systèmes
@@ -84,9 +80,6 @@ clean:
 	rm -rf ${LADIR}
 	rm -f ${LADIR}.zip
 	ls -als
-
-reset:
-	make clean
 	clear
 
 LADIR="IN520_Projet"
