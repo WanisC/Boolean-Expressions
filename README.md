@@ -5,11 +5,11 @@
 - Elie KANGA
 ## Instructors
 - Franck Quesette
-  - Email: franck.quessette@uvsq.fr
+  franck.quessette@uvsq.fr
 - Pierre COUCHENEY
-  - Email: pierre.coucheney@uvsq.fr
+  pierre.coucheney@uvsq.fr
 - Yann Strozecki
-  - Email: yann.strozecki@uvsq.fr
+  yann.strozecki@uvsq.fr
 
 ## Overview
 
