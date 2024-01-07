@@ -77,6 +77,8 @@ mots :
     |   EPSILON                       { $$ = "reconnait(A_final, \"E\");\n" ; }
 
     |   NEWLINE mots                  { $$ = $2; }
+
+    |                                 { $$ = ""; } // Règle pour une fin de fichier se terminant par un retour à la ligne
     ;
 %%
 
@@ -186,7 +188,7 @@ int genere_main(int cpt, char* code, char* reconnaissance) {
     return 0;
 }
 
-int main() {
+int main(void) {
     yyparse();
     return 0;
 }
