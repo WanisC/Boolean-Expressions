@@ -28,7 +28,7 @@ To download and set up the project, follow these steps:
    ```bash
    make update
    ```
-2. Install the required dependencies using:
+3. Install the required dependencies using:
   ```bash
    make install
    ```
