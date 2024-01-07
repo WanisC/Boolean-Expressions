@@ -16,7 +16,8 @@ The aim of this project is to build an automaton that recognizes a language defi
 * The ε-transition removal and determinization methods are implemented to simplify the construction of the word recognition method.
 
 [DOWNLOAD]
-====
+
+===
 * make update
 * make install
 ====
