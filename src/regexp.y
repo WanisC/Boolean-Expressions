@@ -101,7 +101,8 @@ char* concatenerChaines(const char** chaines, int nombreDeChaines) {
 
     // Vérifier si l'allocation de mémoire a réussi
     if (chaineResultante == NULL) {
-        return NULL; // Échec de l'allocation de mémoire
+        printf("Erreur lors de l'allocation de mémoire pour la chaîne résultante\n");
+        exit(1);
     }
 
     // Copier chaque chaîne dans la chaîne résultante
@@ -124,6 +125,11 @@ char* concatenerChaines(const char** chaines, int nombreDeChaines) {
 char* itc(int entier) {
     char *chaine = (char *)malloc(100 * sizeof(char));
 
+    if (chaine == NULL) {
+        printf("Erreur lors de l'allocation de mémoire pour la chaîne\n");
+        exit(1);
+    }
+
     sprintf(chaine, "%d", entier);
 
     return chaine;
@@ -137,6 +143,13 @@ char* genererChainesAutomates(int x) {
 
     // Allouer de la mémoire pour la chaîne résultante
     char* chaineResultante = (char*)malloc(100 * (x + 1));
+
+    // Vérifier si l'allocation de mémoire a réussi
+    if (chaineResultante == NULL) {
+        printf("Erreur lors de l'allocation de mémoire pour la chaîne résultante\n");
+        exit(1);
+    }
+    
     chaineResultante[0] = '\0'; 
 
     strcat(chaineResultante, "AUTOMATE ");

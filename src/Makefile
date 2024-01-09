@@ -41,19 +41,18 @@ regexp: regexp.yy.c regexp.tab.c
 #	gcc -mmacosx-version-min=13.1 -o $@ $^ ${LDFLAGS} -ly -lfl
 
 regexp.tab.c: regexp.y
-	bison -d --report=all $^
+	bison -d -g --report=all $^
 #	bison -d -v -g $^
 # -d pour générer le fichier exo01.tab.h
 # -v pour générer le fichier exo01.output
 # -g pour générer le fichier exo01.vcg
 
 regexp.yy.c: regexp.l
-	flex  -o $@ $^
+	flex -o $@ $^
 
 # Pour mettre à jour les packages
-update_upgrade:
+update:
 	sudo apt update
-	sudo apt upgrade
 
 install:
 	sudo apt-get install -y libbison-dev
@@ -82,12 +81,12 @@ clean:
 	ls -als
 	clear
 
-LADIR="IN520_Projet"
+LADIR="CHOUAIB_KANGA"
 zip:
 	rm -rf ${LADIR}
 	mkdir ${LADIR}
 	cp Makefile automate.h automate.c main.1.c ${LADIR}
-#	cp regexp.l regexp.y ${LADIR}
+	cp regexp.l regexp.y ${LADIR}
 	cp test.1 ${LADIR}
 	rm -f ${LADIR}.zip
 	zip -r ${LADIR}.zip ${LADIR}

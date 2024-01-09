@@ -1,14 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "automate.h"
 
 //###
 // 1. Gestion des états finaux
 //###
-AUTOMATE etat_final_ON    (AUTOMATE A, unsigned int p) {if (p>=A.N) exit (41); A.F[p] = 1; return A;}
-AUTOMATE etat_final_OFF   (AUTOMATE A, unsigned int p) {if (p>=A.N) exit (42); A.F[p] = 0; return A;}
-AUTOMATE etat_final_TOGGLE (AUTOMATE A, unsigned int p) {if (p>=A.N) exit (43); A.F[p] = 1-A.F[p]; return A;}
+AUTOMATE etat_final_ON    	(AUTOMATE A, unsigned int p) { if (p>=A.N) exit (41); A.F[p] = 1; return A; }
+AUTOMATE etat_final_OFF   	(AUTOMATE A, unsigned int p) { if (p>=A.N) exit (42); A.F[p] = 0; return A; }
+AUTOMATE etat_final_TOGGLE 	(AUTOMATE A, unsigned int p) { if (p>=A.N) exit (43); A.F[p] = 1-A.F[p]; return A; }
 
 
 //###
@@ -60,7 +61,6 @@ AUTOMATE ajoute_toutes_les_transition (AUTOMATE A, struct transition *t, int dec
 	return A;
 }
 
-
 //###
 // 3. Création d'automates
 //###
@@ -88,7 +88,6 @@ AUTOMATE creer_automate_une_lettre(char c) {
 	return A;
 }
 
-
 //###
 // 4. Affichage d'un automate
 //###
@@ -112,7 +111,6 @@ void afficher(AUTOMATE A) {
 	}
 	printf("\n\n");
 }
-
 
 //###
 // 5. Opérations de base sur les automate : Union Concat, Étoile
@@ -190,17 +188,17 @@ AUTOMATE etoile_automate (AUTOMATE A) {
 	//###
 
 // Renvoie vrai si la lettre est déjà présente dans le tableau
-int dejaPresent(char lettre, char *tab, int taille) {
+bool dejaPresent(char lettre, char *tab, int taille) {
 	// Parcours du tableau
 	for (int i = 0; i < taille; i++) {
 
 		// Si on trouve la lettre dans le tableau, on renvoie vrai
 		if (tab[i] == lettre) {
-			return 1;
+			return true;
 		}
 	}
 	// Sinon on renvoie faux
-	return 0;
+	return false;
 }
 
 // Structure pour une liste chaînée d'états
@@ -239,9 +237,21 @@ void ajouter_etat(struct listeChainee *liste, unsigned int *ens, int taille) {
 
 	// On créee un nouvel élément
 	struct listeChainee *nouveau = malloc(sizeof(struct listeChainee));
+
+	// On doit tester la valeur de retour de malloc
+	if (!nouveau) {
+		printf("Erreur lors de l'allocation mémoire: nouveau\n");
+		exit(1);
+	}
 	nouveau->cle = curr->cle + 1;
 	nouveau->size = taille;
 	nouveau->etat = malloc(taille * sizeof(unsigned int));
+
+	// On doit tester la valeur de retour de malloc
+	if (!nouveau->etat) {
+		printf("Erreur lors de l'allocation mémoire: nouveau->etat\n");
+		exit(1);
+	}
 
 	// Pour chaque élément de ens
 	for (int i = 0; i < taille; i++) {
@@ -299,18 +309,18 @@ int recherche_cle(struct listeChainee *liste, unsigned int *ens, int taille_ens)
 }
 
 // Renvoie vrai si la transition (p,a,q) est dans l'automate A
-int transition_presente (AUTOMATE A, unsigned int p, char a, unsigned int q) {
+bool transition_presente (AUTOMATE A, unsigned int p, char a, unsigned int q) {
 	// On va parcourir les transitions de A
 	struct transition *t = A.T;
 	while (t) {
 		// Si on trouve la transition (p,a,q) alors on renvoie vrai
-		if (t->p == p && t->a == a && t->q == q) return 1;
+		if (t->p == p && t->a == a && t->q == q) return true;
 		// Sinon on passe à la transition suivante
 		t = t->suiv;
 	}
 	free(t);
 	// Si on arrive ici alors la transition n'est pas présente dans A
-	return 0;
+	return false;
 }
 
 // Recherche les transitions non epsilon pour avoir la transition (q1,a,q3) si elle n'existe pas déjà avec a != epsilon
@@ -342,6 +352,40 @@ void recherche_transition_non_epsilon (AUTOMATE A, unsigned int q1, unsigned int
 		parcours = parcours->suiv;
 	}
 	free(parcours);
+}
+
+// Vérifie si l'automate est déjà déterministe complet
+bool complet(AUTOMATE A, char *alphabet, int alphabet_size) {
+
+	// Pour chaque état
+	for (unsigned int q = 0; q < A.N; q++) {
+
+		// Pour chaque lettre de l'alphabet
+		for (int i = 0; i < alphabet_size; i++) {
+
+			char curr_letter = alphabet[i];
+
+			// On va voir si la transition avec comme état de départ q et comme lettre alphabet[i] existe
+			bool manquante = true;
+
+			struct transition *check = A.T;
+			while (check) {
+
+				// Si on trouve une transition avec l'état courant et la lettre courante
+				if (check->p == q && check->a == curr_letter) {
+					manquante = false;
+					break;
+				}
+				check = check->suiv;
+			}
+
+			// Si la transition est manquante, on renvoie faux
+			if (manquante) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 //###
@@ -464,12 +508,16 @@ AUTOMATE determinise (AUTOMATE A) {
 		return A;
 	}
 
-	alphabet = realloc(alphabet, alphabet_size * sizeof(char));
+	// Si l'alphabet est plus petit que 26, on redimensionne le tableau
+	if (alphabet_size < 26) {
+		// On redimensionne le tableau (plus précisement on réduit l'espace mémoire alloué)
+		alphabet = realloc(alphabet, alphabet_size * sizeof(char));
 
-	// On doit tester la valeur de retour de realloc
-	if (!alphabet) {
-		printf("Erreur lors de la réallocation mémoire: alphabet\n");
-		exit(1);
+		// On doit tester la valeur de retour de realloc
+		if (!alphabet) {
+			printf("Erreur lors de la réallocation mémoire: alphabet\n");
+			exit(1);
+		}
 	}
 
 	// On initialise un index pour la clé
@@ -547,6 +595,7 @@ AUTOMATE determinise (AUTOMATE A) {
 				exit(1);
 			}
 
+			// Pour l'instant il n'y a pas de successeurs, donc on met l'index à 0
 			int index = 0;
 
 			// On va parcourir la longueur du tableau d'états de départ
@@ -570,8 +619,18 @@ AUTOMATE determinise (AUTOMATE A) {
 				}
 			}
 
-			// On redimensionne le tableau (plus précisement on réduit l'espace mémoire alloué)
-			successeurs = realloc(successeurs, index * sizeof(unsigned int));
+			// Si on a trouvé des successeurs
+			if (index != 0) {
+
+				// On redimensionne le tableau (plus précisement on réduit l'espace mémoire alloué)
+				successeurs = realloc(successeurs, index * sizeof(unsigned int));
+
+				// On doit tester la valeur de retour de realloc
+				if (!successeurs) {
+					printf("Erreur lors de la réallocation mémoire: successeurs\n");
+					exit(1);
+				}
+			}
 			
 			// On sauvgarde le nombre d'éléments dans le tableau
 			int taille_successeurs;
@@ -597,10 +656,10 @@ AUTOMATE determinise (AUTOMATE A) {
 
 					// On incrémente l'index pour la clé
 					index_cle++;
-				}
 
-				// On met à jour le nombre d'états de A_determinise
-				A_determinise.N = index_cle;
+					// On met à jour le nombre d'états de A_determinise
+					A_determinise.N = index_cle;
+				}
 
 				//printf("		Nombre d'états: %d\n", A_determinise.N);
 				// On ajoute la transition (curr_cle, curr_letter, cle_succ) à A_determinise
@@ -629,6 +688,11 @@ AUTOMATE determinise (AUTOMATE A) {
 	// On libère la mémoire
 	liberer_chaine(a_traiter);
 
+	// Nous devons vérifier si l'automate n'est pas déjà déterministe complet avant de créer un état poubelle
+	if (complet(A_determinise, alphabet, alphabet_size)) {
+		return A_determinise;
+	}
+
 	// Transformation de l'automate déterminisé en AFD complet
 	A_determinise.N++;
 	unsigned int poubelle = A_determinise.N - 1;
@@ -653,14 +717,14 @@ AUTOMATE determinise (AUTOMATE A) {
 			char curr_letter = alphabet[i];
 
 			// On va voir si la transition avec comme état de départ q et comme lettre alphabet_filtre[i] existe
-			int manquante = 1;
+			bool manquante = true;
 
 			struct transition *check = A_determinise.T;
 			while (check) {
 
 				// Si on trouve une transition avec l'état courant et la lettre courante
 				if (check->p == q_depart && check->a == curr_letter) {
-					manquante = 0;
+					manquante = false;
 					break;
 				}
 				check = check->suiv;
@@ -671,12 +735,10 @@ AUTOMATE determinise (AUTOMATE A) {
 				// On ajoute la transition (q, curr_letter, poubelle)
 				A_determinise = ajoute_une_transition(A_determinise, q_depart, curr_letter, poubelle);
 			}
-
 		}
 	}
 
-	// On libère la mémoire de la liste chaînée / de l'alphabet
-	liberer_chaine(a_traiter);
+	// On libère la mémoire de l'alphabet
 	free(alphabet);
 
 	return A_determinise;
@@ -750,5 +812,6 @@ int reconnait (AUTOMATE A, char *mot) {
 	} else {
 		printf("%s N'est PAS reconnu par %s\n", mot, A.nom);
 	}
+	
 	return retour;
 }
