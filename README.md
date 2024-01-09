@@ -1,4 +1,4 @@
-# Boolean Expressions Evaluation Project
+# Boolean Expressions Evaluation
 
 ## Authors
 - Wanis CHOUAIB
