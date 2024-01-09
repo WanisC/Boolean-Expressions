@@ -24,7 +24,7 @@ The ε-transition removal and determinization methods are implemented to simplif
 
 To download and set up the project, follow these steps:
 
-1. Run the following command to update the project:
+1. Run the following command to update your packages:
   ```bash
    make update
    ```
